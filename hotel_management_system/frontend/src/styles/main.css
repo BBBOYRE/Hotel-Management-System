@@ -1,42 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 /* 全局补丁与打印样式 */
 html, body, #app { height: 100%; margin: 0; }
-body { font-family: 'Microsoft YaHei', -apple-system, sans-serif; background: #f4f6fa; }
+body {
+  font-family: 'Inter', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f0f2f5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
 /* 通用工具类 */
 .muted { color: #909399; }
 .right { text-align: right; }
 .bold  { font-weight: 600; }
-.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.toolbar {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px;
+}
 .filler { flex: 1; }
 
+/* 自定义滚动条 */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Element Plus 覆盖 */
+.el-card { border-radius: 12px !important; border: none !important; }
+.el-card__header { font-weight: 600; }
+.el-table { --el-table-border-color: #f0f0f0; }
+.el-pagination { justify-content: flex-end; }
+
 /* 房态色块 */
-.room-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.room-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); }
 .room-card {
-  position: relative; padding: 14px 14px 12px; border-radius: 8px; cursor: pointer;
-  background: #fff; border: 1px solid #ebeef5; transition: transform .12s, box-shadow .12s;
+  position: relative; padding: 16px 16px 14px; border-radius: 12px; cursor: pointer;
+  background: #fff; border: 1px solid #ebeef5;
+  transition: transform .15s, box-shadow .15s;
 }
-.room-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
-.room-card .room-no { font-size: 20px; font-weight: 600; }
-.room-card .room-meta { font-size: 12px; color: #909399; margin-top: 2px; }
-.room-card .status-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 8px 0 0 8px; }
-.status-1 { background: #67c23a; }
-.status-2 { background: #409eff; }
-.status-3 { background: #f56c6c; }
-.status-4 { background: #e6a23c; }
-.status-5 { background: #909399; }
+.room-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.1); }
+.room-card .room-no { font-size: 20px; font-weight: 700; color: #1e293b; }
+.room-card .room-meta { font-size: 12px; color: #909399; margin-top: 3px; }
+.room-card .status-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 12px 0 0 12px; }
+.status-1 { background: linear-gradient(180deg, #67c23a, #95d475); }
+.status-2 { background: linear-gradient(180deg, #409eff, #79bbff); }
+.status-3 { background: linear-gradient(180deg, #f56c6c, #f89898); }
+.status-4 { background: linear-gradient(180deg, #e6a23c, #eebe77); }
+.status-5 { background: linear-gradient(180deg, #909399, #b1b3b8); }
 
 /* KPI 卡片 */
 .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-.kpi-card { background: #fff; padding: 18px 22px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+.kpi-card {
+  background: #fff; padding: 18px 22px; border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
 .kpi-card .label { color: #909399; font-size: 13px; }
-.kpi-card .value { font-size: 28px; font-weight: 600; margin-top: 6px; color: #303133; }
+.kpi-card .value { font-size: 28px; font-weight: 700; margin-top: 6px; color: #1e293b; }
 .chart-row { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-top: 14px; }
-.chart-box { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+.chart-box { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
 .chart-canvas { height: 320px; }
 
 /* 网页式打印 */
 @media print {
-  body { background: #fff; }
+  body { background: #fff !important; }
   .el-aside, .el-header, .toolbar, .el-pagination, .no-print, .el-button { display: none !important; }
   .el-container, .el-main { display: block !important; padding: 0 !important; overflow: visible !important; }
   .el-card { box-shadow: none !important; border: none !important; }
