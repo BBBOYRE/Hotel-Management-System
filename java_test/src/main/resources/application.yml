@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    # 数据库连接配置
+    driver-class-name: oracle.jdbc.OracleDriver
+    url: jdbc:oracle:thin:@127.0.0.1:1521:test
+    username: sys as sysdba
+    password: 123456
+    
+mybatis:
+  # 打印 SQL 语句到控制台方便调试
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+server:
+  # 后端启动端口
+  port: 8080
