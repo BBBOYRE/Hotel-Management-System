@@ -74,5 +74,5 @@ nbdist/
 *.swo
 
 # Generated frontend assets in Spring static
-java_test/src/main/resources/static/*
-!java_test/src/main/resources/static/.gitkeep
+hotel_management_system/src/main/resources/static/*
+!hotel_management_system/src/main/resources/static/.gitkeep
