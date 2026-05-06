@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oracle.test.mapper.SysDictMapper">
+
+    <resultMap id="BaseMap" type="com.oracle.test.entity.SysDict">
+        <id     property="dictId"     column="DICT_ID"/>
+        <result property="typeCode"   column="TYPE_CODE"/>
+        <result property="itemValue"  column="ITEM_VALUE"/>
+        <result property="itemName"   column="ITEM_NAME"/>
+        <result property="sortOrder"  column="SORT_ORDER"/>
+        <result property="createTime" column="CREATE_TIME"/>
+        <result property="updateTime" column="UPDATE_TIME"/>
+        <result property="updateBy"   column="UPDATE_BY"/>
+    </resultMap>
+
+    <select id="listAll" resultMap="BaseMap">
+        SELECT * FROM SYS_DICT ORDER BY TYPE_CODE, SORT_ORDER, ITEM_VALUE
+    </select>
+
+    <select id="listByType" resultMap="BaseMap">
+        SELECT * FROM SYS_DICT WHERE TYPE_CODE = #{typeCode} ORDER BY SORT_ORDER, ITEM_VALUE
+    </select>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT * FROM SYS_DICT WHERE DICT_ID = #{dictId}
+    </select>
+
+    <insert id="insert" parameterType="com.oracle.test.entity.SysDict">
+        <selectKey keyProperty="dictId" resultType="long" order="BEFORE">
+            SELECT SEQ_SYS_DICT.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO SYS_DICT(DICT_ID, TYPE_CODE, ITEM_VALUE, ITEM_NAME, SORT_ORDER, UPDATE_BY)
+        VALUES(#{dictId}, #{typeCode}, #{itemValue}, #{itemName},
+               <choose><when test="sortOrder != null">#{sortOrder}</when><otherwise>0</otherwise></choose>,
+               #{updateBy})
+    </insert>
+
+    <update id="update" parameterType="com.oracle.test.entity.SysDict">
+        UPDATE SYS_DICT SET
+            TYPE_CODE = #{typeCode},
+            ITEM_VALUE = #{itemValue},
+            ITEM_NAME = #{itemName},
+            SORT_ORDER = #{sortOrder},
+            UPDATE_TIME = SYSDATE,
+            UPDATE_BY = #{updateBy}
+        WHERE DICT_ID = #{dictId}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM SYS_DICT WHERE DICT_ID = #{dictId}
+    </delete>
+</mapper>

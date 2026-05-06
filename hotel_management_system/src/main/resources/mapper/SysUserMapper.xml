@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oracle.test.mapper.SysUserMapper">
+
+    <resultMap id="BaseMap" type="com.oracle.test.entity.SysUser">
+        <id     property="userId"     column="USER_ID"/>
+        <result property="username"   column="USERNAME"/>
+        <result property="password"   column="PASSWORD"/>
+        <result property="realName"   column="REAL_NAME"/>
+        <result property="roleId"     column="ROLE_ID"/>
+        <result property="status"     column="STATUS"/>
+        <result property="isDeleted"  column="IS_DELETED"/>
+        <result property="createTime" column="CREATE_TIME"/>
+        <result property="updateTime" column="UPDATE_TIME"/>
+        <result property="updateBy"   column="UPDATE_BY"/>
+        <result property="roleName"   column="ROLE_NAME"/>
+    </resultMap>
+
+    <sql id="cols">
+        u.USER_ID, u.USERNAME, u.PASSWORD, u.REAL_NAME, u.ROLE_ID, u.STATUS,
+        u.IS_DELETED, u.CREATE_TIME, u.UPDATE_TIME, u.UPDATE_BY, r.ROLE_NAME
+    </sql>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT <include refid="cols"/>
+        FROM SYS_USER u LEFT JOIN SYS_ROLE r ON u.ROLE_ID = r.ROLE_ID
+        WHERE u.USER_ID = #{userId} AND u.IS_DELETED = 0
+    </select>
+
+    <select id="findByUsername" resultMap="BaseMap">
+        SELECT <include refid="cols"/>
+        FROM SYS_USER u LEFT JOIN SYS_ROLE r ON u.ROLE_ID = r.ROLE_ID
+        WHERE u.USERNAME = #{username} AND u.IS_DELETED = 0
+    </select>
+
+    <select id="search" resultMap="BaseMap">
+        SELECT * FROM (
+            SELECT t.*, ROWNUM rn FROM (
+                SELECT <include refid="cols"/>
+                FROM SYS_USER u LEFT JOIN SYS_ROLE r ON u.ROLE_ID = r.ROLE_ID
+                WHERE u.IS_DELETED = 0
+                <if test="keyword != null and keyword != ''">
+                    AND (u.USERNAME LIKE '%' || #{keyword} || '%' OR u.REAL_NAME LIKE '%' || #{keyword} || '%')
+                </if>
+                <if test="status != null">
+                    AND u.STATUS = #{status}
+                </if>
+                ORDER BY u.USER_ID DESC
+            ) t WHERE ROWNUM &lt;= #{offset} + #{limit}
+        ) WHERE rn &gt; #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(1) FROM SYS_USER u WHERE u.IS_DELETED = 0
+        <if test="keyword != null and keyword != ''">
+            AND (u.USERNAME LIKE '%' || #{keyword} || '%' OR u.REAL_NAME LIKE '%' || #{keyword} || '%')
+        </if>
+        <if test="status != null">
+            AND u.STATUS = #{status}
+        </if>
+    </select>
+
+    <insert id="insert" parameterType="com.oracle.test.entity.SysUser">
+        <selectKey keyProperty="userId" resultType="long" order="BEFORE">
+            SELECT SEQ_SYS_USER.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO SYS_USER(USER_ID, USERNAME, PASSWORD, REAL_NAME, ROLE_ID, STATUS, UPDATE_BY)
+        VALUES(#{userId}, #{username}, #{password}, #{realName}, #{roleId},
+               <choose><when test="status != null">#{status}</when><otherwise>1</otherwise></choose>,
+               #{updateBy})
+    </insert>
+
+    <update id="update" parameterType="com.oracle.test.entity.SysUser">
+        UPDATE SYS_USER SET
+            REAL_NAME = #{realName},
+            ROLE_ID   = #{roleId},
+            STATUS    = #{status},
+            UPDATE_TIME = SYSDATE,
+            UPDATE_BY = #{updateBy}
+        WHERE USER_ID = #{userId}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE SYS_USER SET STATUS = #{status}, UPDATE_TIME = SYSDATE, UPDATE_BY = #{updateBy}
+        WHERE USER_ID = #{userId}
+    </update>
+
+    <update id="updatePassword">
+        UPDATE SYS_USER SET PASSWORD = #{password}, UPDATE_TIME = SYSDATE, UPDATE_BY = #{updateBy}
+        WHERE USER_ID = #{userId}
+    </update>
+
+    <update id="logicDelete">
+        UPDATE SYS_USER SET IS_DELETED = 1, UPDATE_TIME = SYSDATE, UPDATE_BY = #{updateBy}
+        WHERE USER_ID = #{userId}
+    </update>
+</mapper>

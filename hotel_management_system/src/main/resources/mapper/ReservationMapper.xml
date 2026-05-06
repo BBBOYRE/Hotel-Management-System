@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oracle.test.mapper.ReservationMapper">
+
+    <resultMap id="BaseMap" type="com.oracle.test.entity.Reservation">
+        <id     property="resId"      column="RES_ID"/>
+        <result property="orderId"    column="ORDER_ID"/>
+        <result property="typeId"     column="TYPE_ID"/>
+        <result property="expectIn"   column="EXPECT_IN"/>
+        <result property="expectOut"  column="EXPECT_OUT"/>
+        <result property="resStatus"  column="RES_STATUS"/>
+        <result property="version"    column="VERSION"/>
+        <result property="createTime" column="CREATE_TIME"/>
+        <result property="updateTime" column="UPDATE_TIME"/>
+        <result property="updateBy"   column="UPDATE_BY"/>
+        <result property="typeName"   column="TYPE_NAME"/>
+        <result property="statusName" column="STATUS_NAME"/>
+    </resultMap>
+
+    <sql id="cols">
+        rv.RES_ID, rv.ORDER_ID, rv.TYPE_ID, rv.EXPECT_IN, rv.EXPECT_OUT, rv.RES_STATUS, rv.VERSION,
+        rv.CREATE_TIME, rv.UPDATE_TIME, rv.UPDATE_BY,
+        rt.TYPE_NAME,
+        d.ITEM_NAME AS STATUS_NAME
+    </sql>
+
+    <sql id="joins">
+        FROM RESERVATION rv
+        LEFT JOIN ROOM_TYPE rt ON rv.TYPE_ID = rt.TYPE_ID
+        LEFT JOIN HOTEL_ORDER o ON rv.ORDER_ID = o.ORDER_ID
+        LEFT JOIN CUSTOMER c    ON o.CUSTOMER_ID = c.CUSTOMER_ID
+        LEFT JOIN SYS_DICT d ON d.TYPE_CODE = 'RES_STATUS' AND d.ITEM_VALUE = rv.RES_STATUS
+    </sql>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT <include refid="cols"/>
+        <include refid="joins"/>
+        WHERE rv.RES_ID = #{resId}
+    </select>
+
+    <select id="listByOrder" resultMap="BaseMap">
+        SELECT <include refid="cols"/>
+        <include refid="joins"/>
+        WHERE rv.ORDER_ID = #{orderId}
+        ORDER BY rv.RES_ID
+    </select>
+
+    <select id="search" resultMap="BaseMap">
+        SELECT * FROM (
+            SELECT t.*, ROWNUM rn FROM (
+                SELECT <include refid="cols"/>, o.ORDER_NO, c.CUST_NAME
+                <include refid="joins"/>
+                WHERE 1 = 1
+                <if test="keyword != null and keyword != ''">
+                    AND (o.ORDER_NO LIKE '%' || #{keyword} || '%' OR c.CUST_NAME LIKE '%' || #{keyword} || '%')
+                </if>
+                <if test="status    != null"> AND rv.RES_STATUS = #{status} </if>
+                <if test="startDate != null"> AND rv.EXPECT_IN  &gt;= #{startDate} </if>
+                <if test="endDate   != null"> AND rv.EXPECT_IN  &lt;  #{endDate}   </if>
+                ORDER BY rv.RES_ID DESC
+            ) t WHERE ROWNUM &lt;= #{offset} + #{limit}
+        ) WHERE rn &gt; #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(1)
+          FROM RESERVATION rv
+          LEFT JOIN HOTEL_ORDER o ON rv.ORDER_ID = o.ORDER_ID
+          LEFT JOIN CUSTOMER c ON o.CUSTOMER_ID = c.CUSTOMER_ID
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND (o.ORDER_NO LIKE '%' || #{keyword} || '%' OR c.CUST_NAME LIKE '%' || #{keyword} || '%')
+        </if>
+        <if test="status    != null"> AND rv.RES_STATUS = #{status} </if>
+        <if test="startDate != null"> AND rv.EXPECT_IN  &gt;= #{startDate} </if>
+        <if test="endDate   != null"> AND rv.EXPECT_IN  &lt;  #{endDate}   </if>
+    </select>
+
+    <insert id="insert" parameterType="com.oracle.test.entity.Reservation">
+        <selectKey keyProperty="resId" resultType="long" order="BEFORE">
+            SELECT SEQ_RESERVATION.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO RESERVATION(RES_ID, ORDER_ID, TYPE_ID, EXPECT_IN, EXPECT_OUT, RES_STATUS, UPDATE_BY)
+        VALUES(#{resId}, #{orderId}, #{typeId}, #{expectIn}, #{expectOut},
+               <choose><when test="resStatus != null">#{resStatus}</when><otherwise>1</otherwise></choose>,
+               #{updateBy})
+    </insert>
+
+    <update id="updateStatusWithVersion">
+        UPDATE RESERVATION SET
+            RES_STATUS = #{status},
+            VERSION = VERSION + 1,
+            UPDATE_TIME = SYSDATE,
+            UPDATE_BY = #{updateBy}
+        WHERE RES_ID = #{resId} AND VERSION = #{version}
+    </update>
+</mapper>

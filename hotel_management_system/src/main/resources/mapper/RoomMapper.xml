@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oracle.test.mapper.RoomMapper">
+
+    <resultMap id="BaseMap" type="com.oracle.test.entity.Room">
+        <id     property="roomId"     column="ROOM_ID"/>
+        <result property="roomNo"     column="ROOM_NO"/>
+        <result property="typeId"     column="TYPE_ID"/>
+        <result property="floorNum"   column="FLOOR_NUM"/>
+        <result property="status"     column="STATUS"/>
+        <result property="isDeleted"  column="IS_DELETED"/>
+        <result property="version"    column="VERSION"/>
+        <result property="createTime" column="CREATE_TIME"/>
+        <result property="updateTime" column="UPDATE_TIME"/>
+        <result property="updateBy"   column="UPDATE_BY"/>
+        <result property="typeName"   column="TYPE_NAME"/>
+        <result property="statusName" column="STATUS_NAME"/>
+    </resultMap>
+
+    <sql id="cols">
+        r.ROOM_ID, r.ROOM_NO, r.TYPE_ID, r.FLOOR_NUM, r.STATUS, r.IS_DELETED, r.VERSION,
+        r.CREATE_TIME, r.UPDATE_TIME, r.UPDATE_BY,
+        rt.TYPE_NAME,
+        d.ITEM_NAME AS STATUS_NAME
+    </sql>
+
+    <sql id="joins">
+        FROM ROOM r
+        LEFT JOIN ROOM_TYPE rt ON r.TYPE_ID = rt.TYPE_ID
+        LEFT JOIN SYS_DICT d ON d.TYPE_CODE = 'ROOM_STATUS' AND d.ITEM_VALUE = r.STATUS
+    </sql>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT <include refid="cols"/>
+        <include refid="joins"/>
+        WHERE r.ROOM_ID = #{roomId} AND r.IS_DELETED = 0
+    </select>
+
+    <sql id="orderClause">
+        <choose>
+            <when test="orderBy == 'roomNo'">  ORDER BY r.ROOM_NO </when>
+            <when test="orderBy == 'floor'">   ORDER BY r.FLOOR_NUM, r.ROOM_NO </when>
+            <when test="orderBy == 'status'">  ORDER BY r.STATUS, r.ROOM_NO </when>
+            <otherwise> ORDER BY r.ROOM_ID </otherwise>
+        </choose>
+    </sql>
+
+    <select id="search" resultMap="BaseMap">
+        SELECT * FROM (
+            SELECT t.*, ROWNUM rn FROM (
+                SELECT <include refid="cols"/>
+                <include refid="joins"/>
+                WHERE r.IS_DELETED = 0
+                <if test="typeId   != null"> AND r.TYPE_ID   = #{typeId} </if>
+                <if test="status   != null"> AND r.STATUS    = #{status} </if>
+                <if test="floorNum != null"> AND r.FLOOR_NUM = #{floorNum} </if>
+                <if test="keyword != null and keyword != ''"> AND r.ROOM_NO LIKE '%' || #{keyword} || '%' </if>
+                <include refid="orderClause"/>
+            ) t WHERE ROWNUM &lt;= #{offset} + #{limit}
+        ) WHERE rn &gt; #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(1) FROM ROOM r WHERE r.IS_DELETED = 0
+        <if test="typeId   != null"> AND r.TYPE_ID   = #{typeId} </if>
+        <if test="status   != null"> AND r.STATUS    = #{status} </if>
+        <if test="floorNum != null"> AND r.FLOOR_NUM = #{floorNum} </if>
+        <if test="keyword != null and keyword != ''"> AND r.ROOM_NO LIKE '%' || #{keyword} || '%' </if>
+    </select>
+
+    <select id="listAll" resultMap="BaseMap">
+        SELECT <include refid="cols"/>
+        <include refid="joins"/>
+        WHERE r.IS_DELETED = 0
+        ORDER BY r.FLOOR_NUM, r.ROOM_NO
+    </select>
+
+    <select id="listAvailableByType" resultMap="BaseMap">
+        SELECT <include refid="cols"/>
+        <include refid="joins"/>
+        WHERE r.IS_DELETED = 0 AND r.STATUS = 1
+        <if test="typeId != null"> AND r.TYPE_ID = #{typeId} </if>
+        ORDER BY r.FLOOR_NUM, r.ROOM_NO
+    </select>
+
+    <insert id="insert" parameterType="com.oracle.test.entity.Room">
+        <selectKey keyProperty="roomId" resultType="long" order="BEFORE">
+            SELECT SEQ_ROOM.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO ROOM(ROOM_ID, ROOM_NO, TYPE_ID, FLOOR_NUM, STATUS, UPDATE_BY)
+        VALUES(#{roomId}, #{roomNo}, #{typeId}, #{floorNum},
+               <choose><when test="status != null">#{status}</when><otherwise>1</otherwise></choose>,
+               #{updateBy})
+    </insert>
+
+    <update id="update" parameterType="com.oracle.test.entity.Room">
+        UPDATE ROOM SET
+            ROOM_NO   = #{roomNo},
+            TYPE_ID   = #{typeId},
+            FLOOR_NUM = #{floorNum},
+            STATUS    = #{status},
+            UPDATE_TIME = SYSDATE,
+            UPDATE_BY = #{updateBy}
+        WHERE ROOM_ID = #{roomId}
+    </update>
+
+    <update id="updateStatusWithVersion">
+        UPDATE ROOM SET
+            STATUS = #{status},
+            VERSION = VERSION + 1,
+            UPDATE_TIME = SYSDATE,
+            UPDATE_BY = #{updateBy}
+        WHERE ROOM_ID = #{roomId} AND VERSION = #{version}
+    </update>
+
+    <update id="logicDelete">
+        UPDATE ROOM SET IS_DELETED = 1, UPDATE_TIME = SYSDATE, UPDATE_BY = #{updateBy}
+        WHERE ROOM_ID = #{roomId}
+    </update>
+</mapper>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oracle.test.mapper.BillItemMapper">
+
+    <resultMap id="BaseMap" type="com.oracle.test.entity.BillItem">
+        <id     property="itemId"      column="ITEM_ID"/>
+        <result property="orderId"     column="ORDER_ID"/>
+        <result property="itemType"    column="ITEM_TYPE"/>
+        <result property="amount"      column="AMOUNT"/>
+        <result property="remark"      column="REMARK"/>
+        <result property="operatorId"  column="OPERATOR_ID"/>
+        <result property="isDeleted"   column="IS_DELETED"/>
+        <result property="recordTime"  column="RECORD_TIME"/>
+        <result property="typeName"    column="TYPE_NAME"/>
+        <result property="operatorName" column="OPERATOR_NAME"/>
+    </resultMap>
+
+    <sql id="cols">
+        b.ITEM_ID, b.ORDER_ID, b.ITEM_TYPE, b.AMOUNT, b.REMARK, b.OPERATOR_ID,
+        b.IS_DELETED, b.RECORD_TIME,
+        d.ITEM_NAME AS TYPE_NAME,
+        u.REAL_NAME AS OPERATOR_NAME
+    </sql>
+
+    <sql id="joins">
+        FROM BILL_ITEM b
+        LEFT JOIN SYS_DICT d ON d.TYPE_CODE = 'BILL_TYPE' AND d.ITEM_VALUE = b.ITEM_TYPE
+        LEFT JOIN SYS_USER u ON u.USER_ID = b.OPERATOR_ID
+    </sql>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT <include refid="cols"/>
+        <include refid="joins"/>
+        WHERE b.ITEM_ID = #{itemId} AND b.IS_DELETED = 0
+    </select>
+
+    <select id="listByOrder" resultMap="BaseMap">
+        SELECT <include refid="cols"/>
+        <include refid="joins"/>
+        WHERE b.ORDER_ID = #{orderId} AND b.IS_DELETED = 0
+        ORDER BY b.RECORD_TIME, b.ITEM_ID
+    </select>
+
+    <select id="search" resultMap="BaseMap">
+        SELECT * FROM (
+            SELECT t.*, ROWNUM rn FROM (
+                SELECT <include refid="cols"/>
+                <include refid="joins"/>
+                WHERE b.IS_DELETED = 0
+                <if test="orderId    != null"> AND b.ORDER_ID    = #{orderId} </if>
+                <if test="itemType   != null"> AND b.ITEM_TYPE   = #{itemType} </if>
+                <if test="operatorId != null"> AND b.OPERATOR_ID = #{operatorId} </if>
+                <if test="startDate  != null"> AND b.RECORD_TIME &gt;= #{startDate} </if>
+                <if test="endDate    != null"> AND b.RECORD_TIME &lt;  #{endDate} </if>
+                ORDER BY b.RECORD_TIME DESC, b.ITEM_ID DESC
+            ) t WHERE ROWNUM &lt;= #{offset} + #{limit}
+        ) WHERE rn &gt; #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(1) FROM BILL_ITEM b WHERE b.IS_DELETED = 0
+        <if test="orderId    != null"> AND b.ORDER_ID    = #{orderId} </if>
+        <if test="itemType   != null"> AND b.ITEM_TYPE   = #{itemType} </if>
+        <if test="operatorId != null"> AND b.OPERATOR_ID = #{operatorId} </if>
+        <if test="startDate  != null"> AND b.RECORD_TIME &gt;= #{startDate} </if>
+        <if test="endDate    != null"> AND b.RECORD_TIME &lt;  #{endDate} </if>
+    </select>
+
+    <select id="sumByOrder" resultType="java.math.BigDecimal">
+        SELECT NVL(SUM(AMOUNT), 0) FROM BILL_ITEM
+        WHERE ORDER_ID = #{orderId} AND IS_DELETED = 0
+    </select>
+
+    <insert id="insert" parameterType="com.oracle.test.entity.BillItem">
+        <selectKey keyProperty="itemId" resultType="long" order="BEFORE">
+            SELECT SEQ_BILL_ITEM.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO BILL_ITEM(ITEM_ID, ORDER_ID, ITEM_TYPE, AMOUNT, REMARK, OPERATOR_ID)
+        VALUES(#{itemId}, #{orderId}, #{itemType}, #{amount}, #{remark}, #{operatorId})
+    </insert>
+
+    <update id="logicDelete">
+        UPDATE BILL_ITEM SET IS_DELETED = 1 WHERE ITEM_ID = #{itemId}
+    </update>
+
+    <select id="shiftSummary" resultType="java.util.Map">
+        SELECT NVL(SUM(CASE WHEN AMOUNT &gt; 0 THEN AMOUNT ELSE 0 END), 0) AS "income",
+               NVL(SUM(CASE WHEN AMOUNT &lt; 0 THEN AMOUNT ELSE 0 END), 0) AS "refund",
+               NVL(SUM(AMOUNT), 0) AS "net",
+               COUNT(1) AS "txnCount"
+          FROM BILL_ITEM
+         WHERE IS_DELETED = 0
+        <if test="operatorId != null"> AND OPERATOR_ID = #{operatorId} </if>
+        <if test="startDate  != null"> AND RECORD_TIME &gt;= #{startDate} </if>
+        <if test="endDate    != null"> AND RECORD_TIME &lt;  #{endDate} </if>
+    </select>
+</mapper>

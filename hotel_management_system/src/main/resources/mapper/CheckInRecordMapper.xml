@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oracle.test.mapper.CheckInRecordMapper">
+
+    <resultMap id="BaseMap" type="com.oracle.test.entity.CheckInRecord">
+        <id     property="recordId"   column="RECORD_ID"/>
+        <result property="orderId"    column="ORDER_ID"/>
+        <result property="resId"      column="RES_ID"/>
+        <result property="roomId"     column="ROOM_ID"/>
+        <result property="checkIn"    column="CHECK_IN"/>
+        <result property="checkOut"   column="CHECK_OUT"/>
+        <result property="status"     column="STATUS"/>
+        <result property="version"    column="VERSION"/>
+        <result property="createTime" column="CREATE_TIME"/>
+        <result property="updateTime" column="UPDATE_TIME"/>
+        <result property="updateBy"   column="UPDATE_BY"/>
+        <result property="roomNo"     column="ROOM_NO"/>
+        <result property="typeName"   column="TYPE_NAME"/>
+        <result property="statusName" column="STATUS_NAME"/>
+    </resultMap>
+
+    <sql id="cols">
+        ci.RECORD_ID, ci.ORDER_ID, ci.RES_ID, ci.ROOM_ID, ci.CHECK_IN, ci.CHECK_OUT,
+        ci.STATUS, ci.VERSION, ci.CREATE_TIME, ci.UPDATE_TIME, ci.UPDATE_BY,
+        r.ROOM_NO,
+        rt.TYPE_NAME,
+        d.ITEM_NAME AS STATUS_NAME
+    </sql>
+
+    <sql id="joins">
+        FROM CHECK_IN_RECORD ci
+        LEFT JOIN ROOM r ON ci.ROOM_ID = r.ROOM_ID
+        LEFT JOIN ROOM_TYPE rt ON r.TYPE_ID = rt.TYPE_ID
+        LEFT JOIN HOTEL_ORDER o ON ci.ORDER_ID = o.ORDER_ID
+        LEFT JOIN CUSTOMER c ON o.CUSTOMER_ID = c.CUSTOMER_ID
+        LEFT JOIN SYS_DICT d ON d.TYPE_CODE = 'CHECK_STATUS' AND d.ITEM_VALUE = ci.STATUS
+    </sql>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT <include refid="cols"/>
+        <include refid="joins"/>
+        WHERE ci.RECORD_ID = #{recordId}
+    </select>
+
+    <select id="listByOrder" resultMap="BaseMap">
+        SELECT <include refid="cols"/>
+        <include refid="joins"/>
+        WHERE ci.ORDER_ID = #{orderId}
+        ORDER BY ci.RECORD_ID
+    </select>
+
+    <select id="search" resultMap="BaseMap">
+        SELECT * FROM (
+            SELECT t.*, ROWNUM rn FROM (
+                SELECT <include refid="cols"/>
+                <include refid="joins"/>
+                WHERE 1 = 1
+                <if test="keyword != null and keyword != ''">
+                    AND (o.ORDER_NO LIKE '%' || #{keyword} || '%'
+                      OR c.CUST_NAME LIKE '%' || #{keyword} || '%'
+                      OR r.ROOM_NO   LIKE '%' || #{keyword} || '%')
+                </if>
+                <if test="status    != null"> AND ci.STATUS = #{status} </if>
+                <if test="startDate != null"> AND ci.CHECK_IN &gt;= #{startDate} </if>
+                <if test="endDate   != null"> AND ci.CHECK_IN &lt;  #{endDate}   </if>
+                ORDER BY ci.RECORD_ID DESC
+            ) t WHERE ROWNUM &lt;= #{offset} + #{limit}
+        ) WHERE rn &gt; #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(1)
+          FROM CHECK_IN_RECORD ci
+          LEFT JOIN HOTEL_ORDER o ON ci.ORDER_ID = o.ORDER_ID
+          LEFT JOIN CUSTOMER c ON o.CUSTOMER_ID = c.CUSTOMER_ID
+          LEFT JOIN ROOM r ON ci.ROOM_ID = r.ROOM_ID
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND (o.ORDER_NO LIKE '%' || #{keyword} || '%'
+              OR c.CUST_NAME LIKE '%' || #{keyword} || '%'
+              OR r.ROOM_NO   LIKE '%' || #{keyword} || '%')
+        </if>
+        <if test="status    != null"> AND ci.STATUS = #{status} </if>
+        <if test="startDate != null"> AND ci.CHECK_IN &gt;= #{startDate} </if>
+        <if test="endDate   != null"> AND ci.CHECK_IN &lt;  #{endDate}   </if>
+    </select>
+
+    <insert id="insert" parameterType="com.oracle.test.entity.CheckInRecord">
+        <selectKey keyProperty="recordId" resultType="long" order="BEFORE">
+            SELECT SEQ_CHECK_IN.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO CHECK_IN_RECORD(RECORD_ID, ORDER_ID, RES_ID, ROOM_ID, CHECK_IN, STATUS, UPDATE_BY)
+        VALUES(#{recordId}, #{orderId}, #{resId}, #{roomId},
+               <choose><when test="checkIn != null">#{checkIn}</when><otherwise>SYSDATE</otherwise></choose>,
+               <choose><when test="status  != null">#{status}</when><otherwise>1</otherwise></choose>,
+               #{updateBy})
+    </insert>
+
+    <update id="updateCheckOutWithVersion">
+        UPDATE CHECK_IN_RECORD SET
+            STATUS = 2,
+            CHECK_OUT = SYSDATE,
+            VERSION = VERSION + 1,
+            UPDATE_TIME = SYSDATE,
+            UPDATE_BY = #{updateBy}
+        WHERE RECORD_ID = #{recordId} AND VERSION = #{version}
+    </update>
+
+    <select id="countInHouse" resultType="long">
+        SELECT COUNT(1) FROM CHECK_IN_RECORD WHERE STATUS = 1
+    </select>
+</mapper>

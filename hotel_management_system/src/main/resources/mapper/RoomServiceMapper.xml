@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oracle.test.mapper.RoomServiceMapper">
+
+    <resultMap id="BaseMap" type="com.oracle.test.entity.RoomService">
+        <id     property="serviceId"   column="SERVICE_ID"/>
+        <result property="roomId"      column="ROOM_ID"/>
+        <result property="serviceType" column="SERVICE_TYPE"/>
+        <result property="reason"      column="REASON"/>
+        <result property="status"      column="STATUS"/>
+        <result property="operatorId"  column="OPERATOR_ID"/>
+        <result property="finishTime"  column="FINISH_TIME"/>
+        <result property="createTime"  column="CREATE_TIME"/>
+        <result property="updateTime"  column="UPDATE_TIME"/>
+        <result property="updateBy"    column="UPDATE_BY"/>
+        <result property="roomNo"      column="ROOM_NO"/>
+        <result property="typeName"    column="TYPE_NAME"/>
+        <result property="statusName"  column="STATUS_NAME"/>
+        <result property="operatorName" column="OPERATOR_NAME"/>
+    </resultMap>
+
+    <sql id="cols">
+        s.SERVICE_ID, s.ROOM_ID, s.SERVICE_TYPE, s.REASON, s.STATUS, s.OPERATOR_ID,
+        s.FINISH_TIME, s.CREATE_TIME, s.UPDATE_TIME, s.UPDATE_BY,
+        r.ROOM_NO,
+        td.ITEM_NAME AS TYPE_NAME,
+        sd.ITEM_NAME AS STATUS_NAME,
+        u.REAL_NAME AS OPERATOR_NAME
+    </sql>
+
+    <sql id="joins">
+        FROM ROOM_SERVICE s
+        LEFT JOIN ROOM r ON s.ROOM_ID = r.ROOM_ID
+        LEFT JOIN SYS_DICT td ON td.TYPE_CODE = 'SERVICE_TYPE'   AND td.ITEM_VALUE = s.SERVICE_TYPE
+        LEFT JOIN SYS_DICT sd ON sd.TYPE_CODE = 'SERVICE_STATUS' AND sd.ITEM_VALUE = s.STATUS
+        LEFT JOIN SYS_USER u ON u.USER_ID = s.OPERATOR_ID
+    </sql>
+
+    <select id="findById" resultMap="BaseMap">
+        SELECT <include refid="cols"/>
+        <include refid="joins"/>
+        WHERE s.SERVICE_ID = #{serviceId}
+    </select>
+
+    <select id="search" resultMap="BaseMap">
+        SELECT * FROM (
+            SELECT t.*, ROWNUM rn FROM (
+                SELECT <include refid="cols"/>
+                <include refid="joins"/>
+                <where>
+                    <if test="status      != null"> AND s.STATUS       = #{status} </if>
+                    <if test="serviceType != null"> AND s.SERVICE_TYPE = #{serviceType} </if>
+                </where>
+                ORDER BY s.SERVICE_ID DESC
+            ) t WHERE ROWNUM &lt;= #{offset} + #{limit}
+        ) WHERE rn &gt; #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(1) FROM ROOM_SERVICE s
+        <where>
+            <if test="status      != null"> AND s.STATUS       = #{status} </if>
+            <if test="serviceType != null"> AND s.SERVICE_TYPE = #{serviceType} </if>
+        </where>
+    </select>
+
+    <insert id="insert" parameterType="com.oracle.test.entity.RoomService">
+        <selectKey keyProperty="serviceId" resultType="long" order="BEFORE">
+            SELECT SEQ_ROOM_SERVICE.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO ROOM_SERVICE(SERVICE_ID, ROOM_ID, SERVICE_TYPE, REASON, STATUS, OPERATOR_ID, UPDATE_BY)
+        VALUES(#{serviceId}, #{roomId}, #{serviceType}, #{reason},
+               <choose><when test="status != null">#{status}</when><otherwise>1</otherwise></choose>,
+               #{operatorId}, #{updateBy})
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE ROOM_SERVICE SET
+            STATUS = #{status},
+            <if test="status == 3"> FINISH_TIME = SYSDATE, </if>
+            OPERATOR_ID = #{operatorId},
+            UPDATE_TIME = SYSDATE,
+            UPDATE_BY = #{updateBy}
+        WHERE SERVICE_ID = #{serviceId}
+    </update>
+</mapper>

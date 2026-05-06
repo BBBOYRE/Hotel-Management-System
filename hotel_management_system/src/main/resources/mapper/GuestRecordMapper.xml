@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oracle.test.mapper.GuestRecordMapper">
+
+    <resultMap id="BaseMap" type="com.oracle.test.entity.GuestRecord">
+        <id     property="guestId"   column="GUEST_ID"/>
+        <result property="recordId"  column="RECORD_ID"/>
+        <result property="guestName" column="GUEST_NAME"/>
+        <result property="idCard"    column="ID_CARD"/>
+        <result property="createTime" column="CREATE_TIME"/>
+        <result property="updateTime" column="UPDATE_TIME"/>
+        <result property="updateBy"   column="UPDATE_BY"/>
+    </resultMap>
+
+    <select id="listByRecord" resultMap="BaseMap">
+        SELECT * FROM GUEST_RECORD WHERE RECORD_ID = #{recordId} ORDER BY GUEST_ID
+    </select>
+
+    <insert id="insert" parameterType="com.oracle.test.entity.GuestRecord">
+        <selectKey keyProperty="guestId" resultType="long" order="BEFORE">
+            SELECT SEQ_GUEST_RECORD.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO GUEST_RECORD(GUEST_ID, RECORD_ID, GUEST_NAME, ID_CARD, UPDATE_BY)
+        VALUES(#{guestId}, #{recordId}, #{guestName}, #{idCard}, #{updateBy})
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM GUEST_RECORD WHERE GUEST_ID = #{guestId}
+    </delete>
+</mapper>
