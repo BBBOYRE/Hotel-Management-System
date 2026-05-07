@@ -12,22 +12,22 @@
     </div>
     <el-card shadow="never" style="border-radius:12px">
       <el-table :data="list" stripe @sort-change="onSort">
-        <el-table-column prop="orderNo" label="订单号" width="160" sortable="custom" />
-        <el-table-column prop="customerName" label="客户" width="100" />
-        <el-table-column prop="totalAmount" label="金额 (¥)" width="120" sortable="custom">
+        <el-table-column prop="orderNo" label="订单号" min-width="160" sortable="custom" />
+        <el-table-column prop="customerName" label="客户" min-width="100" />
+        <el-table-column prop="totalAmount" label="金额 (¥)" min-width="120" sortable="custom">
           <template #default="{ row }">
             <span class="bold">{{ row.totalAmount?.toFixed(2) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100">
+        <el-table-column label="状态" min-width="100">
           <template #default="{ row }">
             <el-tag :type="orderTag(row.status)" size="small" effect="dark" round>
               {{ dictStore.label('ORDER_STATUS', row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="170" sortable="custom" />
-        <el-table-column label="操作" fixed="right" width="200">
+        <el-table-column prop="createTime" label="创建时间" min-width="170" sortable="custom" />
+        <el-table-column label="操作" fixed="right" min-width="200">
           <template #default="{ row }">
             <el-button link type="primary" @click="viewDetail(row)">详情</el-button>
             <el-button link type="danger" v-if="row.status === 1" @click="cancel(row)">取消</el-button>
@@ -58,36 +58,36 @@
 
         <h4 style="margin:18px 0 10px">预订明细</h4>
         <el-table :data="resList" size="small" stripe>
-          <el-table-column prop="resId" label="预订号" width="80" />
+          <el-table-column prop="resId" label="预订号" min-width="80" />
           <el-table-column prop="typeName" label="房型" />
-          <el-table-column prop="expectIn" label="到店" width="110" />
-          <el-table-column prop="expectOut" label="离店" width="110" />
-          <el-table-column label="状态" width="90">
+          <el-table-column prop="expectIn" label="到店" min-width="110" />
+          <el-table-column prop="expectOut" label="离店" min-width="110" />
+          <el-table-column label="状态" min-width="90">
             <template #default="{ row }">{{ dictStore.label('RES_STATUS', row.resStatus) }}</template>
           </el-table-column>
         </el-table>
 
         <h4 style="margin:18px 0 10px">入住记录</h4>
         <el-table :data="ciList" size="small" stripe>
-          <el-table-column prop="recordId" label="入住号" width="80" />
-          <el-table-column prop="roomNo" label="房间" width="80" />
-          <el-table-column prop="checkIn" label="入住" width="155" />
-          <el-table-column prop="checkOut" label="退房" width="155" />
+          <el-table-column prop="recordId" label="入住号" min-width="80" />
+          <el-table-column prop="roomNo" label="房间" min-width="80" />
+          <el-table-column prop="checkIn" label="入住" min-width="155" />
+          <el-table-column prop="checkOut" label="退房" min-width="155" />
         </el-table>
 
         <h4 style="margin:18px 0 10px">账单明细</h4>
         <el-table :data="billList" size="small" stripe>
-          <el-table-column prop="itemId" label="ID" width="60" />
-          <el-table-column label="类型" width="80">
+          <el-table-column prop="itemId" label="ID" min-width="60" />
+          <el-table-column label="类型" min-width="80">
             <template #default="{ row }">{{ dictStore.label('BILL_TYPE', row.itemType) }}</template>
           </el-table-column>
-          <el-table-column prop="amount" label="金额" width="100">
+          <el-table-column prop="amount" label="金额" min-width="100">
             <template #default="{ row }">
               <span :style="{ color: row.amount < 0 ? '#f56c6c' : '#67c23a' }">{{ row.amount?.toFixed(2) }}</span>
             </template>
           </el-table-column>
           <el-table-column prop="remark" label="备注" />
-          <el-table-column prop="recordTime" label="时间" width="155" />
+          <el-table-column prop="recordTime" label="时间" min-width="155" />
         </el-table>
       </template>
     </el-drawer>

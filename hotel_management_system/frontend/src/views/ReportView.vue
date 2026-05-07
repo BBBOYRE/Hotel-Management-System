@@ -22,9 +22,9 @@
     <el-card shadow="never" style="margin-top:16px; border-radius:12px">
       <template #header><span class="chart-title">每日明细表</span></template>
       <el-table :data="daily" stripe>
-        <el-table-column prop="day" label="日期" width="130" sortable />
-        <el-table-column prop="orderCount" label="订单数" width="100" sortable />
-        <el-table-column prop="amount" label="营收 (¥)" width="140" sortable>
+        <el-table-column prop="day" label="日期" min-width="130" sortable />
+        <el-table-column prop="orderCount" label="订单数" min-width="100" sortable />
+        <el-table-column prop="amount" label="营收 (¥)" min-width="140" sortable>
           <template #default="{ row }">
             <span class="bold">{{ Number(row.amount || 0).toFixed(2) }}</span>
           </template>

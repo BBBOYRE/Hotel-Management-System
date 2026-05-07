@@ -21,7 +21,7 @@ public class CheckInService {
     @Autowired private RoomTypeMapper roomTypeMapper;
     @Autowired private HotelOrderMapper orderMapper;
     @Autowired private GuestRecordMapper guestMapper;
-    @Autowired private BillItemMapper billMapper;
+    @Autowired private BillService billService;
 
     public PageResult<CheckInRecord> page(String keyword, Integer status,
                                           Date startDate, Date endDate,
@@ -56,6 +56,9 @@ public class CheckInService {
             Reservation res = resMapper.findById(resId);
             if (res == null) throw new BusinessException("预订不存在");
             if (!res.isPending()) throw new BusinessException("预订状态不可入住");
+            if (!res.getTypeId().equals(room.getTypeId())) {
+                throw new BusinessException("分配的房间类型与预订房型不一致");
+            }
             int u = resMapper.updateStatusWithVersion(resId, Reservation.STATUS_CHECKED, res.getVersion(), updateBy);
             if (u == 0) throw new BusinessException("预订已被他人修改，请刷新后重试");
             orderId = res.getOrderId();
@@ -119,8 +122,7 @@ public class CheckInService {
             fee.setItemType(BillItem.TYPE_ROOM_FEE);
             fee.setAmount(type.calcAmount(nights));
             fee.setRemark("房间 " + room.getRoomNo() + " 共住 " + nights + " 晚");
-            fee.setOperatorId(updateBy);
-            billMapper.insert(fee);
+            billService.addItem(fee, updateBy);
         }
     }
 
@@ -145,6 +147,19 @@ public class CheckInService {
         // 直接更新入住记录的 roomId（通过 update 即可，简化为：插入一条新记录 + 关闭旧记录）
         int u = checkMapper.updateCheckOutWithVersion(recordId, record.getVersion(), updateBy);
         if (u == 0) throw new BusinessException("旧入住记录修改失败");
+
+        // 结转旧房费
+        record = checkMapper.findById(recordId);
+        int nights = record.nights();
+        RoomType type = roomTypeMapper.findById(oldRoom == null ? null : oldRoom.getTypeId());
+        if (type != null) {
+            BillItem fee = new BillItem();
+            fee.setOrderId(record.getOrderId());
+            fee.setItemType(BillItem.TYPE_ROOM_FEE);
+            fee.setAmount(type.calcAmount(nights));
+            fee.setRemark("换房前房间 " + (oldRoom != null ? oldRoom.getRoomNo() : "") + " 共住 " + nights + " 晚");
+            billService.addItem(fee, updateBy);
+        }
 
         CheckInRecord nr = new CheckInRecord();
         nr.setOrderId(record.getOrderId());

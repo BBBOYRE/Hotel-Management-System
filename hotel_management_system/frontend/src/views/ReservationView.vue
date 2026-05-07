@@ -12,20 +12,20 @@
     </div>
     <el-card shadow="never" style="border-radius:12px">
       <el-table :data="list" stripe>
-        <el-table-column prop="resId" label="预订号" width="90" />
-        <el-table-column prop="orderNo" label="订单号" width="150" />
-        <el-table-column prop="customerName" label="客户" width="100" />
-        <el-table-column prop="typeName" label="房型" width="120" />
-        <el-table-column prop="expectIn" label="预计到店" width="115" />
-        <el-table-column prop="expectOut" label="预计离店" width="115" />
-        <el-table-column label="状态" width="100">
+        <el-table-column prop="resId" label="预订号" min-width="90" />
+        <el-table-column prop="orderNo" label="订单号" min-width="150" />
+        <el-table-column prop="customerName" label="客户" min-width="100" />
+        <el-table-column prop="typeName" label="房型" min-width="120" />
+        <el-table-column prop="expectIn" label="预计到店" min-width="115" />
+        <el-table-column prop="expectOut" label="预计离店" min-width="115" />
+        <el-table-column label="状态" min-width="100">
           <template #default="{ row }">
             <el-tag :type="resStatusTag(row.resStatus)" size="small" effect="dark" round>
               {{ dictStore.label('RES_STATUS', row.resStatus) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="180">
+        <el-table-column label="操作" fixed="right" min-width="180">
           <template #default="{ row }">
             <el-button link type="primary" v-if="row.resStatus === 1" @click="goCheckIn(row)">办理入住</el-button>
             <el-button link type="warning" v-if="row.resStatus === 1" @click="cancel(row)">取消</el-button>

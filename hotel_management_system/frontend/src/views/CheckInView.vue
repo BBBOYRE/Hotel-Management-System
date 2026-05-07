@@ -12,20 +12,20 @@
     </div>
     <el-card shadow="never" style="border-radius:12px">
       <el-table :data="list" stripe>
-        <el-table-column prop="recordId" label="入住号" width="80" />
-        <el-table-column prop="orderNo" label="订单号" width="150" />
-        <el-table-column prop="roomNo" label="房间" width="90" />
-        <el-table-column prop="customerName" label="客户" width="100" />
-        <el-table-column prop="checkIn" label="入住时间" width="155" />
-        <el-table-column prop="checkOut" label="退房时间" width="155" />
-        <el-table-column label="状态" width="100">
+        <el-table-column prop="recordId" label="入住号" min-width="80" />
+        <el-table-column prop="orderNo" label="订单号" min-width="150" />
+        <el-table-column prop="roomNo" label="房间" min-width="90" />
+        <el-table-column prop="customerName" label="客户" min-width="100" />
+        <el-table-column prop="checkIn" label="入住时间" min-width="155" />
+        <el-table-column prop="checkOut" label="退房时间" min-width="155" />
+        <el-table-column label="状态" min-width="100">
           <template #default="{ row }">
             <el-tag :type="ciTag(row.status)" size="small" effect="dark" round>
               {{ dictStore.label('CHECKIN_STATUS', row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="220">
+        <el-table-column label="操作" fixed="right" min-width="220">
           <template #default="{ row }">
             <el-button link type="primary" @click="viewGuests(row)">同住人</el-button>
             <el-button link type="warning" v-if="row.status === 1" @click="changeRoom(row)">换房</el-button>

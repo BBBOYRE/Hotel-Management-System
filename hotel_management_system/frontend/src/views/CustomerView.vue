@@ -15,22 +15,22 @@
     </div>
     <el-card shadow="never" style="border-radius:12px">
       <el-table :data="list" stripe @sort-change="onSort">
-        <el-table-column prop="customerId" label="ID" width="70" sortable="custom" />
-        <el-table-column prop="custName" label="姓名" width="100" sortable="custom" />
-        <el-table-column prop="idCard" label="身份证号" width="190" />
-        <el-table-column prop="phone" label="手机号" width="130" />
-        <el-table-column label="性别" width="70">
+        <el-table-column prop="customerId" label="ID" min-width="70" sortable="custom" />
+        <el-table-column prop="custName" label="姓名" min-width="100" sortable="custom" />
+        <el-table-column prop="idCard" label="身份证号" min-width="190" />
+        <el-table-column prop="phone" label="手机号" min-width="130" />
+        <el-table-column label="性别" min-width="70">
           <template #default="{ row }">{{ row.gender === 1 ? '男' : row.gender === 2 ? '女' : '-' }}</template>
         </el-table-column>
-        <el-table-column label="会员等级" width="100">
+        <el-table-column label="会员等级" min-width="100">
           <template #default="{ row }">
             <el-tag :type="['info','','warning','danger'][row.vipLevel]" size="small" effect="dark" round>
               {{ ['普通','银卡','金卡','钻石'][row.vipLevel] || '普通' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="建档时间" width="170" sortable="custom" />
-        <el-table-column label="操作" fixed="right" width="180">
+        <el-table-column prop="createTime" label="建档时间" min-width="170" sortable="custom" />
+        <el-table-column label="操作" fixed="right" min-width="180">
           <template #default="{ row }">
             <el-button link type="primary" @click="openForm(row)">编辑</el-button>
             <el-button link type="danger" @click="del(row)">删除</el-button>

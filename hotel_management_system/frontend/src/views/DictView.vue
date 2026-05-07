@@ -6,13 +6,13 @@
     </div>
     <el-card shadow="never" style="border-radius:12px">
       <el-table :data="filteredList" stripe>
-        <el-table-column prop="dictId" label="ID" width="70" />
-        <el-table-column prop="typeCode" label="类型代码" width="160" />
-        <el-table-column prop="itemValue" label="字典值" width="90" />
-        <el-table-column prop="itemName" label="字典名称" width="140" />
-        <el-table-column prop="sortOrder" label="排序号" width="80" />
-        <el-table-column prop="createTime" label="创建时间" width="170" />
-        <el-table-column label="操作" fixed="right" width="180">
+        <el-table-column prop="dictId" label="ID" min-width="70" />
+        <el-table-column prop="typeCode" label="类型代码" min-width="160" />
+        <el-table-column prop="itemValue" label="字典值" min-width="90" />
+        <el-table-column prop="itemName" label="字典名称" min-width="140" />
+        <el-table-column prop="sortOrder" label="排序号" min-width="80" />
+        <el-table-column prop="createTime" label="创建时间" min-width="170" />
+        <el-table-column label="操作" fixed="right" min-width="180">
           <template #default="{ row }">
             <el-button link type="primary" @click="openForm(row)">编辑</el-button>
             <el-button link type="danger" @click="del(row)">删除</el-button>

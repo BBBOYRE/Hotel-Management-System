@@ -50,6 +50,9 @@ public class HousekeepingService {
         RoomService req = serviceMapper.findById(serviceId);
         if (req == null) throw new BusinessException("工单不存在");
         serviceMapper.updateStatus(serviceId, RoomService.STATUS_FINISHED, operatorId, updateBy);
-        roomService.updateStatus(req.getRoomId(), Room.STATUS_FREE_CLEAN, updateBy);
+        Room room = roomMapper.findById(req.getRoomId());
+        if (room != null && (room.getStatus() == Room.STATUS_FREE_DIRTY || room.getStatus() == Room.STATUS_REPAIRING)) {
+            roomService.updateStatus(req.getRoomId(), Room.STATUS_FREE_CLEAN, updateBy);
+        }
     }
 }

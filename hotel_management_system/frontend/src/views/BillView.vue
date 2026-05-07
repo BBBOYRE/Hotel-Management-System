@@ -14,20 +14,20 @@
     </div>
     <el-card shadow="never" style="border-radius:12px">
       <el-table :data="list" stripe>
-        <el-table-column prop="itemId" label="ID" width="70" />
-        <el-table-column prop="orderId" label="订单ID" width="90" />
-        <el-table-column label="类型" width="100">
+        <el-table-column prop="itemId" label="ID" min-width="70" />
+        <el-table-column prop="orderId" label="订单ID" min-width="90" />
+        <el-table-column label="类型" min-width="100">
           <template #default="{ row }">{{ dictStore.label('BILL_TYPE', row.itemType) }}</template>
         </el-table-column>
-        <el-table-column prop="amount" label="金额" width="120">
+        <el-table-column prop="amount" label="金额" min-width="120">
           <template #default="{ row }">
             <span :class="row.amount < 0 ? 'text-red' : 'text-green'" class="bold">{{ row.amount?.toFixed(2) }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="remark" label="备注" />
-        <el-table-column prop="operatorName" label="收银员" width="100" />
-        <el-table-column prop="recordTime" label="时间" width="170" />
-        <el-table-column label="操作" fixed="right" width="100">
+        <el-table-column prop="operatorName" label="收银员" min-width="100" />
+        <el-table-column prop="recordTime" label="时间" min-width="170" />
+        <el-table-column label="操作" fixed="right" min-width="100">
           <template #default="{ row }">
             <el-button link type="danger" @click="del(row)">删除</el-button>
           </template>

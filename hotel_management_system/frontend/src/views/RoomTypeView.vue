@@ -5,11 +5,11 @@
     </div>
     <el-card shadow="never" style="border-radius:12px">
       <el-table :data="list" stripe>
-        <el-table-column prop="typeId" label="ID" width="70" />
+        <el-table-column prop="typeId" label="ID" min-width="70" />
         <el-table-column prop="typeName" label="房型名称" />
-        <el-table-column prop="basePrice" label="挂牌价 (¥)" width="120" />
-        <el-table-column prop="bedCount" label="床位数" width="90" />
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column prop="basePrice" label="挂牌价 (¥)" min-width="120" />
+        <el-table-column prop="bedCount" label="床位数" min-width="90" />
+        <el-table-column label="操作" min-width="180" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openForm(row)">编辑</el-button>
             <el-button link type="danger" @click="del(row)">删除</el-button>

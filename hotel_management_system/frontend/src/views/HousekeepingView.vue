@@ -13,22 +13,22 @@
     </div>
     <el-card shadow="never" style="border-radius:12px">
       <el-table :data="list" stripe>
-        <el-table-column prop="serviceId" label="ID" width="70" />
-        <el-table-column prop="roomNo" label="房间" width="90" />
-        <el-table-column label="类型" width="100">
+        <el-table-column prop="serviceId" label="ID" min-width="70" />
+        <el-table-column prop="roomNo" label="房间" min-width="90" />
+        <el-table-column label="类型" min-width="100">
           <template #default="{ row }">{{ dictStore.label('SERVICE_TYPE', row.serviceType) }}</template>
         </el-table-column>
         <el-table-column prop="reason" label="原因/备注" />
-        <el-table-column label="状态" width="100">
+        <el-table-column label="状态" min-width="100">
           <template #default="{ row }">
             <el-tag :type="svcTag(row.status)" size="small" effect="dark" round>
               {{ dictStore.label('SERVICE_STATUS', row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="operatorName" label="负责人" width="100" />
-        <el-table-column prop="finishTime" label="完成时间" width="170" />
-        <el-table-column label="操作" fixed="right" width="160">
+        <el-table-column prop="operatorName" label="负责人" min-width="100" />
+        <el-table-column prop="finishTime" label="完成时间" min-width="170" />
+        <el-table-column label="操作" fixed="right" min-width="160">
           <template #default="{ row }">
             <el-button link type="primary" v-if="row.status === 1" @click="take(row)">接单</el-button>
             <el-button link type="success" v-if="row.status === 2" @click="finish(row)">完成</el-button>

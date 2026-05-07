@@ -12,17 +12,17 @@
     </div>
     <el-card shadow="never" style="border-radius:12px">
       <el-table :data="list" stripe>
-        <el-table-column prop="userId" label="ID" width="70" />
-        <el-table-column prop="username" label="账号" width="120" />
-        <el-table-column prop="realName" label="姓名" width="100" />
-        <el-table-column prop="roleName" label="角色" width="120" />
-        <el-table-column label="状态" width="90">
+        <el-table-column prop="userId" label="ID" min-width="70" />
+        <el-table-column prop="username" label="账号" min-width="120" />
+        <el-table-column prop="realName" label="姓名" min-width="100" />
+        <el-table-column prop="roleName" label="角色" min-width="120" />
+        <el-table-column label="状态" min-width="90">
           <template #default="{ row }">
             <el-switch :model-value="row.status === 1" @change="toggleStatus(row)" />
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="170" />
-        <el-table-column label="操作" fixed="right" width="230">
+        <el-table-column prop="createTime" label="创建时间" min-width="170" />
+        <el-table-column label="操作" fixed="right" min-width="230">
           <template #default="{ row }">
             <el-button link type="primary" @click="openForm(row)">编辑</el-button>
             <el-button link type="warning" @click="resetPwd(row)">重置密码</el-button>

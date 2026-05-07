@@ -4,8 +4,8 @@ import http from "../api/http";
 export const useDictStore = defineStore("dict", {
   state: () => ({ map: {} }),
   actions: {
-    async load() {
-      if (Object.keys(this.map).length) return;
+    async load(force = false) {
+      if (!force && Object.keys(this.map).length) return;
       const res = await http.get("/sys/dicts/grouped");
       this.map = res.data || {};
     },

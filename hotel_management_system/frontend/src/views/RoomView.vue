@@ -32,18 +32,18 @@
     <!-- 列表模式 -->
     <el-card v-else shadow="never" style="border-radius:12px">
       <el-table :data="list" stripe style="width:100%">
-        <el-table-column prop="roomNo" label="房间号" width="100" sortable />
-        <el-table-column prop="typeName" label="房型" width="140" />
-        <el-table-column prop="floorNum" label="楼层" width="80" sortable />
-        <el-table-column label="房态" width="110">
+        <el-table-column prop="roomNo" label="房间号" min-width="100" sortable />
+        <el-table-column prop="typeName" label="房型" min-width="140" />
+        <el-table-column prop="floorNum" label="楼层" min-width="80" sortable />
+        <el-table-column label="房态" min-width="110">
           <template #default="{ row }">
             <el-tag :type="statusTag(row.status)" size="small" effect="dark" round>
               {{ dictStore.label('ROOM_STATUS', row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="updateTime" label="更新时间" width="170" />
-        <el-table-column label="操作" fixed="right" width="180">
+        <el-table-column prop="updateTime" label="更新时间" min-width="170" />
+        <el-table-column label="操作" fixed="right" min-width="180">
           <template #default="{ row }">
             <el-button link type="primary" @click="openForm(row)">编辑</el-button>
             <el-button link type="danger" @click="del(row)">删除</el-button>

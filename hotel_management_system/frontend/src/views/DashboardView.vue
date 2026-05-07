@@ -4,7 +4,7 @@
     <div class="kpi-grid">
       <div class="kpi-card" v-for="(kpi, idx) in kpis" :key="idx">
         <div class="kpi-icon-wrap" :style="{ background: kpi.bg }">
-          <el-icon :size="22" color="#fff"><component :is="kpi.icon" /></el-icon>
+          <el-icon :size="24" color="#fff"><component :is="kpi.icon" /></el-icon>
         </div>
         <div class="kpi-body">
           <div class="label">{{ kpi.label }}</div>
@@ -20,7 +20,7 @@
         <div ref="lineRef" class="chart-canvas"></div>
       </el-card>
       <el-card shadow="never" class="chart-box">
-        <template #header><span class="chart-title">房型收益占比</span></template>
+        <template #header><span class="chart-title">近30天每日营收趋势</span></template>
         <div ref="pieRef" class="chart-canvas"></div>
       </el-card>
     </div>
@@ -39,10 +39,10 @@ let pieChart  = null;
 
 const data = ref({});
 const kpis = computed(() => [
-  { label: "客房总数", value: data.value.totalRooms ?? "--", icon: "House", bg: "linear-gradient(135deg,#6366f1,#818cf8)" },
-  { label: "当前在住", value: data.value.inHouseCount ?? "--", icon: "User", bg: "linear-gradient(135deg,#f59e0b,#fbbf24)" },
-  { label: "今日新单", value: data.value.todayOrderCount ?? "--", icon: "Document", bg: "linear-gradient(135deg,#10b981,#34d399)" },
-  { label: "30天入住率", value: occupancy.value, icon: "TrendCharts", bg: "linear-gradient(135deg,#ef4444,#f87171)" }
+  { label: "客房总数", value: data.value.totalRooms ?? "--", icon: "House", bg: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)" },
+  { label: "当前在住", value: data.value.inHouseCount ?? "--", icon: "User", bg: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)" },
+  { label: "今日新单", value: data.value.todayOrderCount ?? "--", icon: "Document", bg: "linear-gradient(135deg, #10b981 0%, #059669 100%)" },
+  { label: "30天入住率", value: occupancy.value, icon: "TrendCharts", bg: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)" }
 ]);
 
 const occupancy = computed(() => {
@@ -63,19 +63,35 @@ onMounted(async () => {
 function renderLine(daily) {
   lineChart = echarts.init(lineRef.value);
   lineChart.setOption({
-    tooltip: { trigger: "axis" },
-    grid: { left: 50, right: 20, top: 20, bottom: 40 },
-    xAxis: { type: "category", data: daily.map(d => d.day), axisLabel: { fontSize: 11 } },
-    yAxis: { type: "value", axisLabel: { fontSize: 11 } },
+    tooltip: { 
+      trigger: "axis",
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      borderColor: 'rgba(255,255,255,1)',
+      textStyle: { color: '#1e293b', fontFamily: 'Inter' },
+      extraCssText: 'box-shadow: 0 4px 15px rgba(0,0,0,0.1); backdrop-filter: blur(10px); border-radius: 8px;'
+    },
+    grid: { left: 60, right: 20, top: 20, bottom: 40 },
+    xAxis: { 
+      type: "category", 
+      data: daily.map(d => d.day), 
+      axisLabel: { fontSize: 12, fontFamily: 'Outfit', color: '#64748b' },
+      axisLine: { lineStyle: { color: '#e2e8f0' } }
+    },
+    yAxis: { 
+      type: "value", 
+      axisLabel: { fontSize: 12, fontFamily: 'Outfit', color: '#64748b' },
+      splitLine: { lineStyle: { color: '#f1f5f9', type: 'dashed' } }
+    },
     series: [{
       data: daily.map(d => d.amount || 0),
       type: "line", smooth: true,
       areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-        { offset: 0, color: "rgba(99,102,241,.35)" },
-        { offset: 1, color: "rgba(99,102,241,.02)" }
+        { offset: 0, color: "rgba(79,70,229,.4)" },
+        { offset: 1, color: "rgba(79,70,229,.0)" }
       ]) },
-      lineStyle: { color: "#6366f1", width: 2.5 },
-      itemStyle: { color: "#6366f1" }
+      lineStyle: { color: "#4f46e5", width: 3 },
+      itemStyle: { color: "#4f46e5", borderWidth: 2, borderColor: '#fff' },
+      symbol: 'circle', symbolSize: 8, showSymbol: false
     }]
   });
 }
@@ -83,13 +99,20 @@ function renderLine(daily) {
 function renderPie(items) {
   pieChart = echarts.init(pieRef.value);
   pieChart.setOption({
-    tooltip: { trigger: "item" },
-    legend: { bottom: 0, textStyle: { fontSize: 11 } },
+    tooltip: { 
+      trigger: "item",
+      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      borderColor: 'rgba(255,255,255,1)',
+      textStyle: { color: '#1e293b', fontFamily: 'Inter' },
+      extraCssText: 'box-shadow: 0 4px 15px rgba(0,0,0,0.1); backdrop-filter: blur(10px); border-radius: 8px;'
+    },
+    legend: { bottom: 0, textStyle: { fontSize: 12, fontFamily: 'Outfit', color: '#475569' }, icon: 'circle' },
+    color: ['#4f46e5', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'],
     series: [{
-      type: "pie", radius: ["40%", "65%"], center: ["50%", "45%"],
-      label: { formatter: "{b}\n{d}%", fontSize: 11 },
+      type: "pie", radius: ["45%", "70%"], center: ["50%", "42%"],
+      label: { formatter: "{b}\n{d}%", fontSize: 12, fontFamily: 'Outfit' },
       data: items.map(i => ({ name: i.typeName || i.TYPE_NAME, value: i.amount || i.AMOUNT || 0 })),
-      itemStyle: { borderRadius: 6, borderColor: "#fff", borderWidth: 2 }
+      itemStyle: { borderRadius: 8, borderColor: "#fff", borderWidth: 3 }
     }]
   });
 }
@@ -108,28 +131,20 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.dashboard { }
-.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
-.kpi-card {
-  display: flex; align-items: center; gap: 16px;
-  background: #fff; padding: 22px 24px; border-radius: 14px;
-  box-shadow: 0 2px 12px rgba(0,0,0,.04);
-  transition: transform .15s, box-shadow .15s;
-}
-.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
 .kpi-icon-wrap {
-  width: 48px; height: 48px; border-radius: 12px;
+  width: 60px; height: 60px; border-radius: 16px;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  position: relative;
+  overflow: hidden;
 }
-.kpi-body .label { font-size: 13px; color: #909399; }
-.kpi-body .value { font-size: 28px; font-weight: 700; color: #1e293b; margin-top: 2px; }
-.chart-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
-.chart-box { border-radius: 14px; }
-.chart-title { font-weight: 600; font-size: 15px; color: #1e293b; }
-.chart-canvas { height: 340px; }
+.kpi-icon-wrap::after {
+  content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+}
+.chart-title { font-weight: 800; font-size: 17px; color: #0f172a; letter-spacing: 0.2px; font-family: 'Outfit', sans-serif;}
 
 @media (max-width: 1100px) {
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .chart-row { grid-template-columns: 1fr; }
 }
 </style>
