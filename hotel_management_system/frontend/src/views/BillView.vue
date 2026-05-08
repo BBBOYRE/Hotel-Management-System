@@ -8,9 +8,8 @@
       <el-date-picker v-model="dateRange" type="daterange" start-placeholder="开始" end-placeholder="结束" value-format="YYYY-MM-DD" @change="onDateChange" style="width:260px" />
       <el-button type="primary" @click="load"><el-icon><Search /></el-icon>查询</el-button>
       <div class="filler"></div>
-      <el-button type="primary" @click="openAdd"><el-icon><Plus /></el-icon>录入账目</el-button>
-      <el-button @click="openSettle"><el-icon><Money /></el-icon>结算</el-button>
-      <el-button @click="openShift"><el-icon><Printer /></el-icon>交接班</el-button>
+      <el-button type="primary" @click="openAdd" v-perm="'bill:add'"><el-icon><Plus /></el-icon>录入账目</el-button>
+      <el-button @click="openShift" v-perm="'bill:shift'"><el-icon><Printer /></el-icon>交接班</el-button>
     </div>
     <el-card shadow="never" style="border-radius:12px">
       <el-table :data="list" stripe>
@@ -26,10 +25,10 @@
         </el-table-column>
         <el-table-column prop="remark" label="备注" />
         <el-table-column prop="operatorName" label="收银员" min-width="100" />
-        <el-table-column prop="recordTime" label="时间" min-width="170" />
+        <el-table-column prop="recordTime" label="时间" min-width="200" />
         <el-table-column label="操作" fixed="right" min-width="100">
           <template #default="{ row }">
-            <el-button link type="danger" @click="del(row)">删除</el-button>
+            <el-button link type="danger" v-perm="'bill:delete'" @click="del(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -40,10 +39,24 @@
       />
     </el-card>
 
-    <!-- 录入 -->
-    <el-dialog v-model="addVisible" title="录入账目" width="480px" append-to-body>
+    <!-- 录入：订单从下拉选择，避免外键违规 -->
+    <el-dialog v-model="addVisible" title="录入账目" width="520px" append-to-body>
       <el-form :model="addForm" label-width="90px">
-        <el-form-item label="订单ID"><el-input-number v-model="addForm.orderId" :min="1" style="width:100%" /></el-form-item>
+        <el-form-item label="订单">
+          <el-select
+            v-model="addForm.orderId"
+            filterable remote :remote-method="searchOrders" :loading="orderLoading"
+            placeholder="输入订单号 / 客户名搜索"
+            style="width:100%"
+          >
+            <el-option
+              v-for="o in orderOptions"
+              :key="o.orderId"
+              :value="o.orderId"
+              :label="`${o.orderNo} - ${o.customerName || ''} (¥${(o.totalAmount||0).toFixed ? o.totalAmount.toFixed(2) : o.totalAmount})`"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="款项类型">
           <el-select v-model="addForm.itemType" style="width:100%">
             <el-option v-for="d in dictStore.items('BILL_TYPE')" :key="d.itemValue" :label="d.itemName" :value="d.itemValue" />
@@ -55,17 +68,6 @@
       <template #footer>
         <el-button @click="addVisible = false">取消</el-button>
         <el-button type="primary" @click="submitAdd">确定</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 结算 -->
-    <el-dialog v-model="settleVisible" title="订单结算" width="400px" append-to-body>
-      <el-form label-width="80px">
-        <el-form-item label="订单ID"><el-input-number v-model="settleOrderId" :min="1" style="width:100%" /></el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="settleVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitSettle">结算</el-button>
       </template>
     </el-dialog>
 
@@ -85,7 +87,7 @@
           <el-descriptions-item label="总收入">¥{{ shiftData.income?.toFixed(2) }}</el-descriptions-item>
           <el-descriptions-item label="总退款">¥{{ shiftData.refund?.toFixed(2) }}</el-descriptions-item>
           <el-descriptions-item label="净收入">¥{{ shiftData.net?.toFixed(2) }}</el-descriptions-item>
-          <el-descriptions-item label="笔数">{{ shiftData.count }}</el-descriptions-item>
+          <el-descriptions-item label="笔数">{{ shiftData.txnCount }}</el-descriptions-item>
         </el-descriptions>
         <el-button class="print-btn no-print" type="primary" @click="window.print()"><el-icon><Printer /></el-icon>打印</el-button>
       </div>
@@ -107,9 +109,8 @@ const query = reactive({ orderId: null, itemType: null, startDate: null, endDate
 
 const addVisible = ref(false);
 const addForm = ref({ orderId: null, itemType: null, amount: 0, remark: "" });
-
-const settleVisible = ref(false);
-const settleOrderId = ref(null);
+const orderOptions = ref([]);
+const orderLoading = ref(false);
 
 const shiftVisible = ref(false);
 const shiftForm = ref({ startDate: "", endDate: "" });
@@ -129,12 +130,25 @@ function onDateChange(v) {
   load();
 }
 
-function openAdd() {
+async function searchOrders(keyword) {
+  orderLoading.value = true;
+  try {
+    const r = await http.get("/orders/active", { params: { keyword: keyword || "" } });
+    orderOptions.value = r.data || [];
+  } finally {
+    orderLoading.value = false;
+  }
+}
+
+async function openAdd() {
   addForm.value = { orderId: null, itemType: null, amount: 0, remark: "" };
+  await searchOrders("");
   addVisible.value = true;
 }
 
 async function submitAdd() {
+  if (!addForm.value.orderId) return ElMessage.warning("请选择订单");
+  if (addForm.value.itemType == null) return ElMessage.warning("请选择款项类型");
   await http.post("/bills", addForm.value);
   ElMessage.success("录入成功");
   addVisible.value = false;
@@ -145,19 +159,6 @@ async function del(row) {
   await ElMessageBox.confirm("确定删除该账目？", "提示", { type: "warning" });
   await http.delete(`/bills/${row.itemId}`);
   ElMessage.success("已删除");
-  load();
-}
-
-function openSettle() {
-  settleOrderId.value = null;
-  settleVisible.value = true;
-}
-
-async function submitSettle() {
-  if (!settleOrderId.value) return ElMessage.warning("请输入订单ID");
-  const r = await http.post("/bills/settle", { orderId: settleOrderId.value });
-  ElMessage.success(`结算完成，总额 ¥${r.data?.toFixed(2)}`);
-  settleVisible.value = false;
   load();
 }
 

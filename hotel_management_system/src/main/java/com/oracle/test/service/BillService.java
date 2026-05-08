@@ -41,6 +41,9 @@ public class BillService {
     public Long addItem(BillItem item, Long operatorId) {
         if (item.getOrderId() == null) throw new BusinessException("缺少订单 ID");
         if (item.getAmount() == null) throw new BusinessException("金额不能为空");
+        HotelOrder order = orderMapper.findById(item.getOrderId());
+        if (order == null) throw new BusinessException("订单不存在或已删除");
+        if (order.isSettled()) throw new BusinessException("订单已结算，不能再录入账目");
         item.setOperatorId(operatorId);
         itemMapper.insert(item);
         BigDecimal sum = itemMapper.sumByOrder(item.getOrderId());

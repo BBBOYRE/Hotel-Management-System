@@ -5,6 +5,7 @@ import com.oracle.test.mapper.CheckInRecordMapper;
 import com.oracle.test.mapper.HotelOrderMapper;
 import com.oracle.test.mapper.RoomMapper;
 import com.oracle.test.service.HotelOrderService;
+import com.oracle.test.service.SystemClock;
 import com.oracle.test.util.ExcelExportUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,15 +23,18 @@ public class ReportController {
     @Autowired private HotelOrderMapper orderMapper;
     @Autowired private CheckInRecordMapper checkMapper;
     @Autowired private RoomMapper roomMapper;
+    @Autowired private SystemClock clock;
 
     /** 看板首屏汇总 */
     @GetMapping("/dashboard")
     public Result<Map<String, Object>> dashboard() {
         Map<String, Object> data = new HashMap<>();
-        data.put("totalRooms", roomMapper.count(null, null, null, null));
+        long totalRooms = roomMapper.count(null, null, null, null);
+        data.put("totalRooms", totalRooms);
         data.put("inHouseCount", checkMapper.countInHouse());
 
         Calendar c = Calendar.getInstance();
+        c.setTime(clock.now());
         c.set(Calendar.HOUR_OF_DAY, 0);
         c.set(Calendar.MINUTE, 0);
         c.set(Calendar.SECOND, 0);
@@ -40,16 +44,24 @@ public class ReportController {
         Date end = c.getTime();
         data.put("todayOrderCount", orderMapper.count(null, null, start, end));
 
-        c.setTime(new Date());
+        c.setTime(clock.now());
         c.add(Calendar.DAY_OF_MONTH, -29);
         c.set(Calendar.HOUR_OF_DAY, 0);
         c.set(Calendar.MINUTE, 0);
         c.set(Calendar.SECOND, 0);
         c.set(Calendar.MILLISECOND, 0);
         Date m30 = c.getTime();
-        Date now = new Date();
+        Date now = clock.now();
         data.put("daily30", orderService.dailyRevenue(m30, now));
         data.put("roomTypeRevenue", orderService.roomTypeRevenue(m30, now));
+
+        // 真实 30 天入住率：窗口内总占用天数 / (房间数 * 30)
+        Map<String, Object> occ = orderMapper.occupancyDays(m30, now);
+        double occupiedDays = occ == null || occ.get("occupiedDays") == null
+                ? 0d : ((Number) occ.get("occupiedDays")).doubleValue();
+        double capacity = totalRooms * 30d;
+        double rate = capacity > 0 ? occupiedDays / capacity : 0d;
+        data.put("occupancy30", rate);
         return Result.ok(data);
     }
 
@@ -68,7 +80,9 @@ public class ReportController {
     @GetMapping("/daily/export")
     public void exportDaily(@RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
                             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
+                            com.oracle.test.common.LoginUser current,
                             HttpServletResponse response) throws IOException {
+        current.require("report:export");
         List<Map<String, Object>> rows = orderService.dailyRevenue(startDate, endDate);
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("day",        "日期");

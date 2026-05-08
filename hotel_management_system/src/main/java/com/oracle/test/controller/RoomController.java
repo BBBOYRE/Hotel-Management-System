@@ -45,11 +45,13 @@ public class RoomController {
 
     @PostMapping
     public Result<Long> create(@RequestBody Room room, LoginUser current) {
+        current.require("room:edit");
         return Result.ok(service.create(room, current.getUserId()));
     }
 
     @PutMapping("/{id}")
     public Result<Void> update(@PathVariable Long id, @RequestBody Room room, LoginUser current) {
+        current.require("room:edit");
         room.setRoomId(id);
         service.update(room, current.getUserId());
         return Result.ok();
@@ -59,12 +61,14 @@ public class RoomController {
     public Result<Void> changeStatus(@PathVariable Long id,
                                      @RequestBody Map<String, Integer> body,
                                      LoginUser current) {
+        current.require("room:edit");
         service.updateStatus(id, body.get("status"), current.getUserId());
         return Result.ok();
     }
 
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id, LoginUser current) {
+        current.require("room:delete");
         service.delete(id, current.getUserId());
         return Result.ok();
     }

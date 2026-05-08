@@ -49,6 +49,7 @@ public class CheckInController {
 
     @PostMapping
     public Result<CheckInRecord> checkIn(@RequestBody Map<String, Object> body, LoginUser current) {
+        current.require("checkin:checkin");
         Long resId = toLong(body.get("resId"));
         Long roomId = toLong(body.get("roomId"));
         Long customerId = toLong(body.get("customerId"));
@@ -68,6 +69,7 @@ public class CheckInController {
 
     @PostMapping("/{id}/check-out")
     public Result<Void> checkOut(@PathVariable Long id, LoginUser current) {
+        current.require("checkin:checkout");
         service.checkOut(id, current.getUserId());
         return Result.ok();
     }
@@ -76,6 +78,7 @@ public class CheckInController {
     public Result<Void> changeRoom(@PathVariable Long id,
                                    @RequestBody Map<String, Object> body,
                                    LoginUser current) {
+        current.require("checkin:changeroom");
         service.changeRoom(id, toLong(body.get("roomId")), current.getUserId());
         return Result.ok();
     }

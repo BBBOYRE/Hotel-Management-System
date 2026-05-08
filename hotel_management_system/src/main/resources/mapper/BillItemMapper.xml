@@ -5,6 +5,7 @@
     <resultMap id="BaseMap" type="com.oracle.test.entity.BillItem">
         <id     property="itemId"      column="ITEM_ID"/>
         <result property="orderId"     column="ORDER_ID"/>
+        <result property="segmentId"   column="SEGMENT_ID"/>
         <result property="itemType"    column="ITEM_TYPE"/>
         <result property="amount"      column="AMOUNT"/>
         <result property="remark"      column="REMARK"/>
@@ -16,7 +17,7 @@
     </resultMap>
 
     <sql id="cols">
-        b.ITEM_ID, b.ORDER_ID, b.ITEM_TYPE, b.AMOUNT, b.REMARK, b.OPERATOR_ID,
+        b.ITEM_ID, b.ORDER_ID, b.SEGMENT_ID, b.ITEM_TYPE, b.AMOUNT, b.REMARK, b.OPERATOR_ID,
         b.IS_DELETED, b.RECORD_TIME,
         d.ITEM_NAME AS TYPE_NAME,
         u.REAL_NAME AS OPERATOR_NAME
@@ -75,8 +76,8 @@
         <selectKey keyProperty="itemId" resultType="long" order="BEFORE">
             SELECT SEQ_BILL_ITEM.NEXTVAL FROM DUAL
         </selectKey>
-        INSERT INTO BILL_ITEM(ITEM_ID, ORDER_ID, ITEM_TYPE, AMOUNT, REMARK, OPERATOR_ID)
-        VALUES(#{itemId}, #{orderId}, #{itemType}, #{amount}, #{remark}, #{operatorId})
+        INSERT INTO BILL_ITEM(ITEM_ID, ORDER_ID, SEGMENT_ID, ITEM_TYPE, AMOUNT, REMARK, OPERATOR_ID, RECORD_TIME)
+        VALUES(#{itemId}, #{orderId}, #{segmentId}, #{itemType}, #{amount}, #{remark}, #{operatorId}, F_NOW())
     </insert>
 
     <update id="logicDelete">

@@ -20,8 +20,8 @@
         <selectKey keyProperty="guestId" resultType="long" order="BEFORE">
             SELECT SEQ_GUEST_RECORD.NEXTVAL FROM DUAL
         </selectKey>
-        INSERT INTO GUEST_RECORD(GUEST_ID, RECORD_ID, GUEST_NAME, ID_CARD, UPDATE_BY)
-        VALUES(#{guestId}, #{recordId}, #{guestName}, #{idCard}, #{updateBy})
+        INSERT INTO GUEST_RECORD(GUEST_ID, RECORD_ID, GUEST_NAME, ID_CARD, CREATE_TIME, UPDATE_TIME, UPDATE_BY)
+        VALUES(#{guestId}, #{recordId}, #{guestName}, #{idCard}, F_NOW(), F_NOW(), #{updateBy})
     </insert>
 
     <delete id="delete">

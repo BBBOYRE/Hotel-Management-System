@@ -6,6 +6,7 @@
         <id     property="roleId"     column="ROLE_ID"/>
         <result property="roleName"   column="ROLE_NAME"/>
         <result property="description" column="DESCRIPTION"/>
+        <result property="permissions" column="PERMISSIONS"/>
         <result property="isDeleted"  column="IS_DELETED"/>
         <result property="createTime" column="CREATE_TIME"/>
         <result property="updateTime" column="UPDATE_TIME"/>
@@ -24,20 +25,21 @@
         <selectKey keyProperty="roleId" resultType="long" order="BEFORE">
             SELECT SEQ_SYS_ROLE.NEXTVAL FROM DUAL
         </selectKey>
-        INSERT INTO SYS_ROLE(ROLE_ID, ROLE_NAME, DESCRIPTION, UPDATE_BY)
-        VALUES(#{roleId}, #{roleName}, #{description}, #{updateBy})
+        INSERT INTO SYS_ROLE(ROLE_ID, ROLE_NAME, DESCRIPTION, PERMISSIONS, CREATE_TIME, UPDATE_TIME, UPDATE_BY)
+        VALUES(#{roleId}, #{roleName}, #{description}, #{permissions}, F_NOW(), F_NOW(), #{updateBy})
     </insert>
 
     <update id="update" parameterType="com.oracle.test.entity.SysRole">
         UPDATE SYS_ROLE SET
             ROLE_NAME = #{roleName},
             DESCRIPTION = #{description},
-            UPDATE_TIME = SYSDATE,
+            PERMISSIONS = #{permissions},
+            UPDATE_TIME = F_NOW(),
             UPDATE_BY = #{updateBy}
         WHERE ROLE_ID = #{roleId}
     </update>
 
     <update id="logicDelete">
-        UPDATE SYS_ROLE SET IS_DELETED = 1, UPDATE_TIME = SYSDATE WHERE ROLE_ID = #{roleId}
+        UPDATE SYS_ROLE SET IS_DELETED = 1, UPDATE_TIME = F_NOW() WHERE ROLE_ID = #{roleId}
     </update>
 </mapper>

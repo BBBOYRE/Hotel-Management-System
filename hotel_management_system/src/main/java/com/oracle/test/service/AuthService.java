@@ -25,6 +25,7 @@ public class AuthService {
             throw new BusinessException("用户名或密码错误");
         }
         return new LoginUser(user.getUserId(), user.getUsername(),
-                user.getRealName(), user.getRoleId(), user.getRoleName());
+                user.getRealName(), user.getRoleId(), user.getRoleName(),
+                LoginUser.parsePermissions(user.getPermissions()));
     }
 }

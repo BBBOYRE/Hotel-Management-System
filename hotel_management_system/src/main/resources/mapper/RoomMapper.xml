@@ -87,10 +87,10 @@
         <selectKey keyProperty="roomId" resultType="long" order="BEFORE">
             SELECT SEQ_ROOM.NEXTVAL FROM DUAL
         </selectKey>
-        INSERT INTO ROOM(ROOM_ID, ROOM_NO, TYPE_ID, FLOOR_NUM, STATUS, UPDATE_BY)
+        INSERT INTO ROOM(ROOM_ID, ROOM_NO, TYPE_ID, FLOOR_NUM, STATUS, CREATE_TIME, UPDATE_TIME, UPDATE_BY)
         VALUES(#{roomId}, #{roomNo}, #{typeId}, #{floorNum},
                <choose><when test="status != null">#{status}</when><otherwise>1</otherwise></choose>,
-               #{updateBy})
+               F_NOW(), F_NOW(), #{updateBy})
     </insert>
 
     <update id="update" parameterType="com.oracle.test.entity.Room">
@@ -99,7 +99,7 @@
             TYPE_ID   = #{typeId},
             FLOOR_NUM = #{floorNum},
             STATUS    = #{status},
-            UPDATE_TIME = SYSDATE,
+            UPDATE_TIME = F_NOW(),
             UPDATE_BY = #{updateBy}
         WHERE ROOM_ID = #{roomId}
     </update>
@@ -108,13 +108,13 @@
         UPDATE ROOM SET
             STATUS = #{status},
             VERSION = VERSION + 1,
-            UPDATE_TIME = SYSDATE,
+            UPDATE_TIME = F_NOW(),
             UPDATE_BY = #{updateBy}
         WHERE ROOM_ID = #{roomId} AND VERSION = #{version}
     </update>
 
     <update id="logicDelete">
-        UPDATE ROOM SET IS_DELETED = 1, UPDATE_TIME = SYSDATE, UPDATE_BY = #{updateBy}
+        UPDATE ROOM SET IS_DELETED = 1, UPDATE_TIME = F_NOW(), UPDATE_BY = #{updateBy}
         WHERE ROOM_ID = #{roomId}
     </update>
 </mapper>

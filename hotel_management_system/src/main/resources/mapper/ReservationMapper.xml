@@ -80,17 +80,17 @@
         <selectKey keyProperty="resId" resultType="long" order="BEFORE">
             SELECT SEQ_RESERVATION.NEXTVAL FROM DUAL
         </selectKey>
-        INSERT INTO RESERVATION(RES_ID, ORDER_ID, TYPE_ID, EXPECT_IN, EXPECT_OUT, RES_STATUS, UPDATE_BY)
+        INSERT INTO RESERVATION(RES_ID, ORDER_ID, TYPE_ID, EXPECT_IN, EXPECT_OUT, RES_STATUS, CREATE_TIME, UPDATE_TIME, UPDATE_BY)
         VALUES(#{resId}, #{orderId}, #{typeId}, #{expectIn}, #{expectOut},
                <choose><when test="resStatus != null">#{resStatus}</when><otherwise>1</otherwise></choose>,
-               #{updateBy})
+               F_NOW(), F_NOW(), #{updateBy})
     </insert>
 
     <update id="updateStatusWithVersion">
         UPDATE RESERVATION SET
             RES_STATUS = #{status},
             VERSION = VERSION + 1,
-            UPDATE_TIME = SYSDATE,
+            UPDATE_TIME = F_NOW(),
             UPDATE_BY = #{updateBy}
         WHERE RES_ID = #{resId} AND VERSION = #{version}
     </update>

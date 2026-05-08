@@ -19,6 +19,7 @@ public class SysUser {
     private Long updateBy;
 
     private String roleName;
+    private String permissions;
 
     public void encryptPassword(String rawPassword) {
         if (!PasswordUtil.isStrong(rawPassword)) {
@@ -61,4 +62,6 @@ public class SysUser {
     public void setUpdateBy(Long updateBy) { this.updateBy = updateBy; }
     public String getRoleName() { return roleName; }
     public void setRoleName(String roleName) { this.roleName = roleName; }
+    public String getPermissions() { return permissions; }
+    public void setPermissions(String permissions) { this.permissions = permissions; }
 }

@@ -24,17 +24,20 @@ public class HousekeepingController {
 
     @PostMapping
     public Result<Long> create(@RequestBody RoomService req, LoginUser current) {
+        current.require("housekeeping:dispatch");
         return Result.ok(service.createOrder(req, current.getUserId()));
     }
 
     @PostMapping("/{id}/take")
     public Result<Void> take(@PathVariable Long id, LoginUser current) {
+        current.require("housekeeping:finish");
         service.take(id, current.getUserId(), current.getUserId());
         return Result.ok();
     }
 
     @PostMapping("/{id}/finish")
     public Result<Void> finish(@PathVariable Long id, LoginUser current) {
+        current.require("housekeeping:finish");
         service.finish(id, current.getUserId(), current.getUserId());
         return Result.ok();
     }

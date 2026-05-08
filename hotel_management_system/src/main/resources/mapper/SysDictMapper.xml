@@ -29,10 +29,10 @@
         <selectKey keyProperty="dictId" resultType="long" order="BEFORE">
             SELECT SEQ_SYS_DICT.NEXTVAL FROM DUAL
         </selectKey>
-        INSERT INTO SYS_DICT(DICT_ID, TYPE_CODE, ITEM_VALUE, ITEM_NAME, SORT_ORDER, UPDATE_BY)
+        INSERT INTO SYS_DICT(DICT_ID, TYPE_CODE, ITEM_VALUE, ITEM_NAME, SORT_ORDER, CREATE_TIME, UPDATE_TIME, UPDATE_BY)
         VALUES(#{dictId}, #{typeCode}, #{itemValue}, #{itemName},
                <choose><when test="sortOrder != null">#{sortOrder}</when><otherwise>0</otherwise></choose>,
-               #{updateBy})
+               F_NOW(), F_NOW(), #{updateBy})
     </insert>
 
     <update id="update" parameterType="com.oracle.test.entity.SysDict">
@@ -41,7 +41,7 @@
             ITEM_VALUE = #{itemValue},
             ITEM_NAME = #{itemName},
             SORT_ORDER = #{sortOrder},
-            UPDATE_TIME = SYSDATE,
+            UPDATE_TIME = F_NOW(),
             UPDATE_BY = #{updateBy}
         WHERE DICT_ID = #{dictId}
     </update>

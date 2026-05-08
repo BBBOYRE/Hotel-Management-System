@@ -45,4 +45,8 @@ public interface HotelOrderMapper {
     /** 按房型统计入住数与收益 */
     List<Map<String, Object>> roomTypeRevenue(@Param("startDate") Date startDate,
                                               @Param("endDate") Date endDate);
+
+    /** 给定时间窗口内的总占用天数（用于计算入住率） */
+    Map<String, Object> occupancyDays(@Param("startDate") Date startDate,
+                                      @Param("endDate") Date endDate);
 }

@@ -41,6 +41,7 @@ public class ReservationController {
 
     @PostMapping
     public Result<Reservation> book(@RequestBody Map<String, Object> body, LoginUser current) {
+        current.require("reservation:edit");
         Long customerId = toLong(body.get("customerId"));
         Reservation form = new Reservation();
         form.setTypeId(toLong(body.get("typeId")));
@@ -51,12 +52,14 @@ public class ReservationController {
 
     @PostMapping("/{id}/cancel")
     public Result<Void> cancel(@PathVariable Long id, LoginUser current) {
+        current.require("reservation:cancel");
         service.cancel(id, current.getUserId());
         return Result.ok();
     }
 
     @PostMapping("/{id}/no-show")
     public Result<Void> noShow(@PathVariable Long id, LoginUser current) {
+        current.require("reservation:cancel");
         service.markNoShow(id, current.getUserId());
         return Result.ok();
     }

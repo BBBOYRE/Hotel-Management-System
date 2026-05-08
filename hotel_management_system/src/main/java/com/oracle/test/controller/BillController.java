@@ -43,19 +43,15 @@ public class BillController {
 
     @PostMapping
     public Result<Long> add(@RequestBody BillItem item, LoginUser current) {
+        current.require("bill:add");
         return Result.ok(service.addItem(item, current.getUserId()));
     }
 
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id, LoginUser current) {
+        current.require("bill:delete");
         service.removeItem(id, current.getUserId());
         return Result.ok();
-    }
-
-    @PostMapping("/settle")
-    public Result<BigDecimal> settle(@RequestBody Map<String, Object> body, LoginUser current) {
-        Long orderId = ((Number) body.get("orderId")).longValue();
-        return Result.ok(service.settle(orderId, current.getUserId()));
     }
 
     @GetMapping("/shift")
@@ -63,6 +59,7 @@ public class BillController {
                                              @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date startDate,
                                              @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date endDate,
                                              LoginUser current) {
+        current.require("bill:shift");
         Long opId = operatorId == null ? current.getUserId() : operatorId;
         return Result.ok(service.shiftSummary(opId, startDate, endDate));
     }

@@ -65,10 +65,10 @@
         <selectKey keyProperty="customerId" resultType="long" order="BEFORE">
             SELECT SEQ_CUSTOMER.NEXTVAL FROM DUAL
         </selectKey>
-        INSERT INTO CUSTOMER(CUSTOMER_ID, CUST_NAME, ID_CARD, PHONE, GENDER, VIP_LEVEL, UPDATE_BY)
+        INSERT INTO CUSTOMER(CUSTOMER_ID, CUST_NAME, ID_CARD, PHONE, GENDER, VIP_LEVEL, CREATE_TIME, UPDATE_TIME, UPDATE_BY)
         VALUES(#{customerId}, #{custName}, #{idCard}, #{phone}, #{gender},
                <choose><when test="vipLevel != null">#{vipLevel}</when><otherwise>0</otherwise></choose>,
-               #{updateBy})
+               F_NOW(), F_NOW(), #{updateBy})
     </insert>
 
     <update id="update" parameterType="com.oracle.test.entity.Customer">
@@ -77,13 +77,13 @@
             PHONE     = #{phone},
             GENDER    = #{gender},
             VIP_LEVEL = #{vipLevel},
-            UPDATE_TIME = SYSDATE,
+            UPDATE_TIME = F_NOW(),
             UPDATE_BY = #{updateBy}
         WHERE CUSTOMER_ID = #{customerId}
     </update>
 
     <update id="logicDelete">
-        UPDATE CUSTOMER SET IS_DELETED = 1, UPDATE_TIME = SYSDATE, UPDATE_BY = #{updateBy}
+        UPDATE CUSTOMER SET IS_DELETED = 1, UPDATE_TIME = F_NOW(), UPDATE_BY = #{updateBy}
         WHERE CUSTOMER_ID = #{customerId}
     </update>
 </mapper>

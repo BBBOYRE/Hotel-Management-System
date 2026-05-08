@@ -26,8 +26,8 @@
         <selectKey keyProperty="typeId" resultType="long" order="BEFORE">
             SELECT SEQ_ROOM_TYPE.NEXTVAL FROM DUAL
         </selectKey>
-        INSERT INTO ROOM_TYPE(TYPE_ID, TYPE_NAME, BASE_PRICE, BED_COUNT, UPDATE_BY)
-        VALUES(#{typeId}, #{typeName}, #{basePrice}, #{bedCount}, #{updateBy})
+        INSERT INTO ROOM_TYPE(TYPE_ID, TYPE_NAME, BASE_PRICE, BED_COUNT, CREATE_TIME, UPDATE_TIME, UPDATE_BY)
+        VALUES(#{typeId}, #{typeName}, #{basePrice}, #{bedCount}, F_NOW(), F_NOW(), #{updateBy})
     </insert>
 
     <update id="update" parameterType="com.oracle.test.entity.RoomType">
@@ -35,7 +35,7 @@
             TYPE_NAME  = #{typeName},
             BASE_PRICE = #{basePrice},
             BED_COUNT  = #{bedCount},
-            UPDATE_TIME = SYSDATE,
+            UPDATE_TIME = F_NOW(),
             UPDATE_BY = #{updateBy}
         WHERE TYPE_ID = #{typeId}
     </update>
@@ -46,13 +46,13 @@
             BASE_PRICE = #{basePrice},
             BED_COUNT  = #{bedCount},
             VERSION = VERSION + 1,
-            UPDATE_TIME = SYSDATE,
+            UPDATE_TIME = F_NOW(),
             UPDATE_BY = #{updateBy}
         WHERE TYPE_ID = #{typeId} AND VERSION = #{version}
     </update>
 
     <update id="logicDelete">
-        UPDATE ROOM_TYPE SET IS_DELETED = 1, UPDATE_TIME = SYSDATE, UPDATE_BY = #{updateBy}
+        UPDATE ROOM_TYPE SET IS_DELETED = 1, UPDATE_TIME = F_NOW(), UPDATE_BY = #{updateBy}
         WHERE TYPE_ID = #{typeId}
     </update>
 </mapper>

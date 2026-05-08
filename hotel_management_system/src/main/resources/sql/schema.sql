@@ -6,10 +6,11 @@
 
 -- ---------- 清理旧对象（首次执行时会有 ORA-00942/02289，忽略即可） ----------
 BEGIN
+    BEGIN EXECUTE IMMEDIATE 'DROP FUNCTION F_NOW'; EXCEPTION WHEN OTHERS THEN NULL; END;
     FOR rec IN (SELECT table_name FROM user_tables WHERE table_name IN (
         'BILL_ITEM','CHECK_IN_RECORD','RESERVATION','HOTEL_ORDER',
         'ROOM_SERVICE','ROOM','ROOM_TYPE','GUEST_RECORD','CUSTOMER',
-        'SYS_DICT','SYS_USER','SYS_ROLE'))
+        'SYS_DICT','SYS_USER','SYS_ROLE','SYS_CLOCK'))
     LOOP
         EXECUTE IMMEDIATE 'DROP TABLE ' || rec.table_name || ' CASCADE CONSTRAINTS PURGE';
     END LOOP;
@@ -20,17 +21,39 @@ BEGIN
 END;
 /
 
+-- ============================== 模块零：虚拟时钟 ================================
+-- 单行表存储相对真实时间的偏移天数；F_NOW() 返回 SYSDATE + OFFSET_DAYS。
+-- 所有业务表的 CREATE_TIME / UPDATE_TIME / RECORD_TIME 默认值都用 F_NOW()。
+CREATE TABLE SYS_CLOCK (
+    ID           NUMBER(1)     PRIMARY KEY,
+    OFFSET_DAYS  NUMBER(10,4)  DEFAULT 0 NOT NULL
+);
+COMMENT ON TABLE SYS_CLOCK IS '虚拟时钟（仅 1 行，ID=1）';
+INSERT INTO SYS_CLOCK(ID, OFFSET_DAYS) VALUES (1, 0);
+
+CREATE OR REPLACE FUNCTION F_NOW RETURN DATE IS
+    v_off NUMBER;
+BEGIN
+    SELECT OFFSET_DAYS INTO v_off FROM SYS_CLOCK WHERE ID = 1;
+    RETURN SYSDATE + v_off;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN RETURN SYSDATE;
+END;
+/
+
 -- ============================== 模块一：系统与权限 ==============================
 CREATE TABLE SYS_ROLE (
     ROLE_ID      NUMBER(10)    PRIMARY KEY,
     ROLE_NAME    VARCHAR2(50)  NOT NULL,
     DESCRIPTION  VARCHAR2(200),
+    PERMISSIONS  VARCHAR2(2000),
     IS_DELETED   NUMBER(1)     DEFAULT 0,
     CREATE_TIME  DATE          DEFAULT SYSDATE,
     UPDATE_TIME  DATE          DEFAULT SYSDATE,
     UPDATE_BY    NUMBER(10)
 );
 COMMENT ON TABLE SYS_ROLE IS '系统角色表';
+COMMENT ON COLUMN SYS_ROLE.PERMISSIONS IS '权限码 CSV，如 customer:view,bill:add';
 
 CREATE TABLE SYS_USER (
     USER_ID      NUMBER(10)    PRIMARY KEY,
@@ -190,16 +213,19 @@ COMMENT ON TABLE GUEST_RECORD IS '同住人登记表';
 CREATE TABLE BILL_ITEM (
     ITEM_ID      NUMBER(10)    PRIMARY KEY,
     ORDER_ID     NUMBER(10)    NOT NULL,
+    SEGMENT_ID   NUMBER(10),
     ITEM_TYPE    NUMBER(2)     NOT NULL,
     AMOUNT       NUMBER(10,2)  NOT NULL,
     REMARK       VARCHAR2(200),
     OPERATOR_ID  NUMBER(10),
     IS_DELETED   NUMBER(1)     DEFAULT 0,
     RECORD_TIME  DATE          DEFAULT SYSDATE,
-    CONSTRAINT FK_BILL_ORDER FOREIGN KEY (ORDER_ID)    REFERENCES HOTEL_ORDER(ORDER_ID),
-    CONSTRAINT FK_BILL_USER  FOREIGN KEY (OPERATOR_ID) REFERENCES SYS_USER(USER_ID)
+    CONSTRAINT FK_BILL_ORDER   FOREIGN KEY (ORDER_ID)    REFERENCES HOTEL_ORDER(ORDER_ID),
+    CONSTRAINT FK_BILL_USER    FOREIGN KEY (OPERATOR_ID) REFERENCES SYS_USER(USER_ID),
+    CONSTRAINT FK_BILL_SEGMENT FOREIGN KEY (SEGMENT_ID)  REFERENCES CHECK_IN_RECORD(RECORD_ID)
 );
 COMMENT ON TABLE BILL_ITEM IS '财务账单明细表';
+COMMENT ON COLUMN BILL_ITEM.SEGMENT_ID IS '关联入住段（仅房费时使用，用于按房型归账）';
 CREATE INDEX IDX_BILL_RECORD_TIME ON BILL_ITEM(RECORD_TIME);
 
 -- ============================== 序列 ===========================================
@@ -218,10 +244,15 @@ CREATE SEQUENCE SEQ_BILL_ITEM     START WITH 100 INCREMENT BY 1 NOCACHE;
 
 -- ============================== 初始化数据 =====================================
 
--- 角色
-INSERT INTO SYS_ROLE(ROLE_ID, ROLE_NAME, DESCRIPTION) VALUES (1, '管理员',   '系统管理员，拥有所有权限');
-INSERT INTO SYS_ROLE(ROLE_ID, ROLE_NAME, DESCRIPTION) VALUES (2, '普通前台', '前台日常运营，办理预订、入住、结算');
-INSERT INTO SYS_ROLE(ROLE_ID, ROLE_NAME, DESCRIPTION) VALUES (3, '财务',     '财务对账、报表统计、导出');
+-- 角色（PERMISSIONS 用 CSV 存权限码；管理员置 *，登录后端按"含 * 即全权"处理）
+INSERT INTO SYS_ROLE(ROLE_ID, ROLE_NAME, DESCRIPTION, PERMISSIONS) VALUES
+    (1, '管理员',   '系统管理员，拥有所有权限', '*');
+INSERT INTO SYS_ROLE(ROLE_ID, ROLE_NAME, DESCRIPTION, PERMISSIONS) VALUES
+    (2, '普通前台', '前台日常运营，办理预订、入住、结算',
+     'dashboard:view,customer:view,customer:edit,roomtype:view,room:view,reservation:view,reservation:edit,reservation:cancel,checkin:view,checkin:checkin,checkin:checkout,checkin:changeroom,order:view,order:cancel,bill:view,bill:add,housekeeping:view,housekeeping:dispatch,housekeeping:finish');
+INSERT INTO SYS_ROLE(ROLE_ID, ROLE_NAME, DESCRIPTION, PERMISSIONS) VALUES
+    (3, '财务',     '财务对账、报表统计、导出',
+     'dashboard:view,customer:view,roomtype:view,room:view,reservation:view,checkin:view,order:view,order:settle,order:export,bill:view,bill:add,bill:delete,bill:shift,report:view,report:export');
 
 -- 默认管理员（密码：admin123，已使用 SHA-256 加盐 hash 存储；盐固定为 'hotel'）
 -- 注意：实际登录通过后端 PasswordUtil 进行校验，这里写死同一种 hash

@@ -17,7 +17,7 @@
         class="side-menu"
       >
         <template v-for="item in menuItems" :key="item.path">
-          <el-menu-item :index="'/' + item.path" v-if="!item.admin || isAdmin">
+          <el-menu-item :index="'/' + item.path" v-if="!item.perm || auth.has(item.perm)">
             <el-icon><component :is="item.icon" /></el-icon>
             <template #title>{{ item.title }}</template>
           </el-menu-item>
@@ -106,7 +106,7 @@ const menuItems = computed(() => {
     path: r.path.replace(/^\//, ""),
     title: r.meta.title,
     icon: r.meta.icon,
-    admin: r.meta.admin || false
+    perm: r.meta.perm || null
   }));
 });
 

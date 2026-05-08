@@ -25,6 +25,10 @@ public class CheckInRecord {
     private String roomNo;
     private String typeName;
     private String statusName;
+    private String orderNo;
+    private String customerName;
+    private Integer segNo;
+    private Integer segTotal;
 
     public void doCheckOut() {
         if (status != null && status == STATUS_OUT) {
@@ -72,4 +76,12 @@ public class CheckInRecord {
     public void setTypeName(String typeName) { this.typeName = typeName; }
     public String getStatusName() { return statusName; }
     public void setStatusName(String statusName) { this.statusName = statusName; }
+    public String getOrderNo() { return orderNo; }
+    public void setOrderNo(String orderNo) { this.orderNo = orderNo; }
+    public String getCustomerName() { return customerName; }
+    public void setCustomerName(String customerName) { this.customerName = customerName; }
+    public Integer getSegNo() { return segNo; }
+    public void setSegNo(Integer segNo) { this.segNo = segNo; }
+    public Integer getSegTotal() { return segTotal; }
+    public void setSegTotal(Integer segTotal) { this.segTotal = segTotal; }
 }

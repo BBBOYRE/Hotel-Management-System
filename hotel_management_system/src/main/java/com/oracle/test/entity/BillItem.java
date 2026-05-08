@@ -14,6 +14,7 @@ public class BillItem {
 
     private Long itemId;
     private Long orderId;
+    private Long segmentId;
     private Integer itemType;
     private BigDecimal amount;
     private String remark;
@@ -36,6 +37,8 @@ public class BillItem {
     public void setItemId(Long itemId) { this.itemId = itemId; }
     public Long getOrderId() { return orderId; }
     public void setOrderId(Long orderId) { this.orderId = orderId; }
+    public Long getSegmentId() { return segmentId; }
+    public void setSegmentId(Long segmentId) { this.segmentId = segmentId; }
     public Integer getItemType() { return itemType; }
     public void setItemType(Integer itemType) { this.itemType = itemType; }
     public BigDecimal getAmount() { return amount; }

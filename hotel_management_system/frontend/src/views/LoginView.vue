@@ -31,6 +31,8 @@
 import { ref, shallowRef } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth";
+import { firstAccessiblePath } from "../router";
+import { ElMessage } from "element-plus";
 import { User, Lock, OfficeBuilding, ArrowRight } from "@element-plus/icons-vue";
 
 const router = useRouter();
@@ -50,7 +52,13 @@ async function handleLogin() {
   loading.value = true;
   try {
     await auth.login(form.value.username, form.value.password);
-    router.replace("/dashboard");
+    const target = firstAccessiblePath(auth);
+    if (!target) {
+      await auth.logout();
+      ElMessage.error("当前账号未配置任何菜单权限，请联系管理员");
+      return;
+    }
+    router.replace(target);
   } finally {
     loading.value = false;
   }

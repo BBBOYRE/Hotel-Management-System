@@ -27,10 +27,11 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" min-width="170" sortable="custom" />
-        <el-table-column label="操作" fixed="right" min-width="200">
+        <el-table-column label="操作" fixed="right" min-width="240">
           <template #default="{ row }">
             <el-button link type="primary" @click="viewDetail(row)">详情</el-button>
-            <el-button link type="danger" v-if="row.status === 1" @click="cancel(row)">取消</el-button>
+            <el-button link type="success" v-if="row.status === 1" v-perm="'order:settle'" @click="settle(row)">结算</el-button>
+            <el-button link type="danger"  v-if="row.status === 1" v-perm="'order:cancel'" @click="cancel(row)">取消</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -153,6 +154,23 @@ async function cancel(row) {
   await ElMessageBox.confirm(`确定取消订单 ${row.orderNo} ？`, "提示", { type: "warning" });
   await http.post(`/orders/${row.orderId}/cancel`);
   ElMessage.success("已取消");
+  load();
+}
+
+async function settle(row) {
+  // 先拉一下当前账单合计，让用户在确认前看到金额
+  let sum = 0;
+  try {
+    const r = await http.get(`/bills/sum/${row.orderId}`);
+    sum = r.data || 0;
+  } catch (e) { /* */ }
+  await ElMessageBox.confirm(
+    `订单 ${row.orderNo}，当前账单合计 ¥${Number(sum).toFixed(2)}，确认结算？`,
+    "结算确认",
+    { type: "warning" }
+  );
+  const r = await http.post(`/orders/${row.orderId}/settle`);
+  ElMessage.success(`结算完成，总额 ¥${Number(r.data || 0).toFixed(2)}`);
   load();
 }
 

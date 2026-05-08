@@ -22,6 +22,7 @@ public class CheckInService {
     @Autowired private HotelOrderMapper orderMapper;
     @Autowired private GuestRecordMapper guestMapper;
     @Autowired private BillService billService;
+    @Autowired private SystemClock clock;
 
     public PageResult<CheckInRecord> page(String keyword, Integer status,
                                           Date startDate, Date endDate,
@@ -80,7 +81,7 @@ public class CheckInService {
         record.setOrderId(orderId);
         record.setResId(resId);
         record.setRoomId(roomId);
-        record.setCheckIn(new Date());
+        record.setCheckIn(clock.now());
         record.setStatus(CheckInRecord.STATUS_IN);
         record.setUpdateBy(updateBy);
         checkMapper.insert(record);
@@ -97,7 +98,10 @@ public class CheckInService {
         return record;
     }
 
-    /** 退房：变更入住状态，房间转空闲脏房，按入住夜数生成房费账单。 */
+    /**
+     * 退房：变更入住状态、房间转空闲脏房，并按订单的所有入住段累计生成房费账单。
+     * 一次完整入住（含若干次换房）只在最终退房时结算，避免重复出账。
+     */
     @Transactional
     public void checkOut(Long recordId, Long updateBy) {
         CheckInRecord record = checkMapper.findById(recordId);
@@ -112,21 +116,32 @@ public class CheckInService {
             roomMapper.updateStatusWithVersion(record.getRoomId(), Room.STATUS_FREE_DIRTY, room.getVersion(), updateBy);
         }
 
-        // 自动生成房费账单（如果还没生成）
-        record = checkMapper.findById(recordId);
-        int nights = record.nights();
-        RoomType type = roomTypeMapper.findById(room == null ? null : room.getTypeId());
-        if (type != null) {
+        // 按订单累计所有段的房费：每段 nights * 该段所在房型的 basePrice
+        Long orderId = record.getOrderId();
+        List<CheckInRecord> segments = checkMapper.listByOrder(orderId);
+        int idx = 0;
+        for (CheckInRecord seg : segments) {
+            idx++;
+            Room segRoom = roomMapper.findById(seg.getRoomId());
+            if (segRoom == null) continue;
+            RoomType type = roomTypeMapper.findById(segRoom.getTypeId());
+            if (type == null) continue;
+            int nights = seg.nights();
             BillItem fee = new BillItem();
-            fee.setOrderId(record.getOrderId());
+            fee.setOrderId(orderId);
+            fee.setSegmentId(seg.getRecordId());
             fee.setItemType(BillItem.TYPE_ROOM_FEE);
             fee.setAmount(type.calcAmount(nights));
-            fee.setRemark("房间 " + room.getRoomNo() + " 共住 " + nights + " 晚");
+            String prefix = segments.size() > 1 ? ("第" + idx + "段：") : "";
+            fee.setRemark(prefix + "房间 " + segRoom.getRoomNo() + " 共住 " + nights + " 晚");
             billService.addItem(fee, updateBy);
         }
     }
 
-    /** 异常换房：旧房标脏 + 新房入住 */
+    /**
+     * 换房：旧房标脏 + 关闭旧入住段 + 新房入住段开启。
+     * 注意：换房时不立即出账，所有段的房费在最终退房时统一累计，避免同一晚被收两次。
+     */
     @Transactional
     public void changeRoom(Long recordId, Long newRoomId, Long updateBy) {
         CheckInRecord record = checkMapper.findById(recordId);
@@ -144,28 +159,14 @@ public class CheckInService {
         int rows = roomMapper.updateStatusWithVersion(newRoomId, Room.STATUS_OCCUPIED, newRoom.getVersion(), updateBy);
         if (rows == 0) throw new BusinessException("新房间已被他人占用");
 
-        // 直接更新入住记录的 roomId（通过 update 即可，简化为：插入一条新记录 + 关闭旧记录）
         int u = checkMapper.updateCheckOutWithVersion(recordId, record.getVersion(), updateBy);
         if (u == 0) throw new BusinessException("旧入住记录修改失败");
-
-        // 结转旧房费
-        record = checkMapper.findById(recordId);
-        int nights = record.nights();
-        RoomType type = roomTypeMapper.findById(oldRoom == null ? null : oldRoom.getTypeId());
-        if (type != null) {
-            BillItem fee = new BillItem();
-            fee.setOrderId(record.getOrderId());
-            fee.setItemType(BillItem.TYPE_ROOM_FEE);
-            fee.setAmount(type.calcAmount(nights));
-            fee.setRemark("换房前房间 " + (oldRoom != null ? oldRoom.getRoomNo() : "") + " 共住 " + nights + " 晚");
-            billService.addItem(fee, updateBy);
-        }
 
         CheckInRecord nr = new CheckInRecord();
         nr.setOrderId(record.getOrderId());
         nr.setResId(record.getResId());
         nr.setRoomId(newRoomId);
-        nr.setCheckIn(new Date());
+        nr.setCheckIn(clock.now());
         nr.setStatus(CheckInRecord.STATUS_IN);
         nr.setUpdateBy(updateBy);
         checkMapper.insert(nr);

@@ -27,11 +27,13 @@ public class RoomTypeController {
 
     @PostMapping
     public Result<Long> create(@RequestBody RoomType type, LoginUser current) {
+        current.require("roomtype:edit");
         return Result.ok(service.create(type, current.getUserId()));
     }
 
     @PutMapping("/{id}")
     public Result<Void> update(@PathVariable Long id, @RequestBody RoomType type, LoginUser current) {
+        current.require("roomtype:edit");
         type.setTypeId(id);
         service.update(type, current.getUserId());
         return Result.ok();
@@ -39,6 +41,7 @@ public class RoomTypeController {
 
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id, LoginUser current) {
+        current.require("roomtype:delete");
         service.delete(id, current.getUserId());
         return Result.ok();
     }

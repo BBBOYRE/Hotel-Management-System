@@ -11,6 +11,7 @@ public class SysRole {
     private Long roleId;
     private String roleName;
     private String description;
+    private String permissions;
     private Integer isDeleted;
     private Date createTime;
     private Date updateTime;
@@ -26,6 +27,8 @@ public class SysRole {
     public void setRoleName(String roleName) { this.roleName = roleName; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public String getPermissions() { return permissions; }
+    public void setPermissions(String permissions) { this.permissions = permissions; }
     public Integer getIsDeleted() { return isDeleted; }
     public void setIsDeleted(Integer isDeleted) { this.isDeleted = isDeleted; }
     public Date getCreateTime() { return createTime; }

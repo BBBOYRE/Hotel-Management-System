@@ -40,11 +40,13 @@ public class CustomerController {
 
     @PostMapping
     public Result<Long> create(@RequestBody Customer customer, LoginUser current) {
+        current.require("customer:edit");
         return Result.ok(service.create(customer, current.getUserId()));
     }
 
     @PutMapping("/{id}")
     public Result<Void> update(@PathVariable Long id, @RequestBody Customer customer, LoginUser current) {
+        current.require("customer:edit");
         customer.setCustomerId(id);
         service.update(customer, current.getUserId());
         return Result.ok();
@@ -52,6 +54,7 @@ public class CustomerController {
 
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id, LoginUser current) {
+        current.require("customer:delete");
         service.delete(id, current.getUserId());
         return Result.ok();
     }

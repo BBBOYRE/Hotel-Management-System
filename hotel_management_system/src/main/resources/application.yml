@@ -2,12 +2,15 @@ spring:
   datasource:
     driver-class-name: oracle.jdbc.OracleDriver
     url: jdbc:oracle:thin:@127.0.0.1:1521:test
-    username: sys as sysdba
-    password: 123456
+    username: HOTEL
+    password: hotel123
   servlet:
     multipart:
       max-file-size: 20MB
       max-request-size: 20MB
+  jackson:
+    date-format: yyyy'年'MM'月'dd'日' HH:mm:ss
+    time-zone: GMT+8
 
 mybatis:
   mapper-locations: classpath*:mapper/*.xml

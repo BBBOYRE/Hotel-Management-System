@@ -103,8 +103,8 @@ function renderPie() {
     tooltip: { trigger: "item" },
     legend: { bottom: 0, textStyle: { fontSize: 11 } },
     series: [{
-      type: "pie", radius: ["40%", "65%"], center: ["50%", "45%"],
-      label: { formatter: "{b}\n{d}%", fontSize: 11 },
+      type: "pie", radius: ["35%", "50%"], center: ["50%", "45%"],
+      label: { formatter: "{b}\n{d}%", fontSize: 11, overflow: "break" },
       data: byType.value.map(i => ({ name: i.typeName || i.TYPE_NAME, value: i.amount || i.AMOUNT || 0 })),
       itemStyle: { borderRadius: 6, borderColor: "#fff", borderWidth: 2 }
     }]

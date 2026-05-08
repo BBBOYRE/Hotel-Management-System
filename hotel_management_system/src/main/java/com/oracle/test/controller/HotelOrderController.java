@@ -4,6 +4,7 @@ import com.oracle.test.common.LoginUser;
 import com.oracle.test.common.PageResult;
 import com.oracle.test.common.Result;
 import com.oracle.test.entity.HotelOrder;
+import com.oracle.test.service.BillService;
 import com.oracle.test.service.HotelOrderService;
 import com.oracle.test.util.ExcelExportUtil;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,6 +13,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 
 @RestController
@@ -19,6 +21,7 @@ import java.util.*;
 public class HotelOrderController {
 
     @Autowired private HotelOrderService service;
+    @Autowired private BillService billService;
 
     @GetMapping
     public Result<PageResult<HotelOrder>> page(@RequestParam(required = false) String keyword,
@@ -36,10 +39,24 @@ public class HotelOrderController {
         return Result.ok(service.get(id));
     }
 
+    /** 用于账目录入下拉：返回进行中（status=1）的订单 */
+    @GetMapping("/active")
+    public Result<List<HotelOrder>> active(@RequestParam(required = false) String keyword) {
+        return Result.ok(service.list(keyword, HotelOrder.STATUS_ONGOING, null, null, null));
+    }
+
     @PostMapping("/{id}/cancel")
     public Result<Void> cancel(@PathVariable Long id, LoginUser current) {
+        current.require("order:cancel");
         service.cancel(id, current.getUserId());
         return Result.ok();
+    }
+
+    /** 结算订单：进行中 → 已结算（与原 /api/bills/settle 等价，更符合订单语义放在订单中心） */
+    @PostMapping("/{id}/settle")
+    public Result<BigDecimal> settle(@PathVariable Long id, LoginUser current) {
+        current.require("order:settle");
+        return Result.ok(billService.settle(id, current.getUserId()));
     }
 
     @GetMapping("/export")
@@ -47,7 +64,9 @@ public class HotelOrderController {
                        @RequestParam(required = false) Integer status,
                        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
                        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
+                       LoginUser current,
                        HttpServletResponse response) throws IOException {
+        current.require("order:export");
         List<HotelOrder> all = service.list(keyword, status, startDate, endDate, null);
 
         Map<String, String> headers = new LinkedHashMap<>();

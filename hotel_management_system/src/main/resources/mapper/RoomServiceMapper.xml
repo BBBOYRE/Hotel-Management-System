@@ -68,18 +68,18 @@
         <selectKey keyProperty="serviceId" resultType="long" order="BEFORE">
             SELECT SEQ_ROOM_SERVICE.NEXTVAL FROM DUAL
         </selectKey>
-        INSERT INTO ROOM_SERVICE(SERVICE_ID, ROOM_ID, SERVICE_TYPE, REASON, STATUS, OPERATOR_ID, UPDATE_BY)
+        INSERT INTO ROOM_SERVICE(SERVICE_ID, ROOM_ID, SERVICE_TYPE, REASON, STATUS, OPERATOR_ID, CREATE_TIME, UPDATE_TIME, UPDATE_BY)
         VALUES(#{serviceId}, #{roomId}, #{serviceType}, #{reason},
                <choose><when test="status != null">#{status}</when><otherwise>1</otherwise></choose>,
-               #{operatorId}, #{updateBy})
+               #{operatorId}, F_NOW(), F_NOW(), #{updateBy})
     </insert>
 
     <update id="updateStatus">
         UPDATE ROOM_SERVICE SET
             STATUS = #{status},
-            <if test="status == 3"> FINISH_TIME = SYSDATE, </if>
+            <if test="status == 3"> FINISH_TIME = F_NOW(), </if>
             OPERATOR_ID = #{operatorId},
-            UPDATE_TIME = SYSDATE,
+            UPDATE_TIME = F_NOW(),
             UPDATE_BY = #{updateBy}
         WHERE SERVICE_ID = #{serviceId}
     </update>

@@ -17,6 +17,10 @@
         <result property="roomNo"     column="ROOM_NO"/>
         <result property="typeName"   column="TYPE_NAME"/>
         <result property="statusName" column="STATUS_NAME"/>
+        <result property="orderNo"    column="ORDER_NO"/>
+        <result property="customerName" column="CUSTOMER_NAME"/>
+        <result property="segNo"      column="SEG_NO"/>
+        <result property="segTotal"   column="SEG_TOTAL"/>
     </resultMap>
 
     <sql id="cols">
@@ -24,7 +28,13 @@
         ci.STATUS, ci.VERSION, ci.CREATE_TIME, ci.UPDATE_TIME, ci.UPDATE_BY,
         r.ROOM_NO,
         rt.TYPE_NAME,
-        d.ITEM_NAME AS STATUS_NAME
+        d.ITEM_NAME AS STATUS_NAME,
+        o.ORDER_NO  AS ORDER_NO,
+        c.CUST_NAME AS CUSTOMER_NAME,
+        (SELECT COUNT(1) FROM CHECK_IN_RECORD x
+            WHERE x.ORDER_ID = ci.ORDER_ID AND x.RECORD_ID &lt;= ci.RECORD_ID) AS SEG_NO,
+        (SELECT COUNT(1) FROM CHECK_IN_RECORD x
+            WHERE x.ORDER_ID = ci.ORDER_ID)                                  AS SEG_TOTAL
     </sql>
 
     <sql id="joins">
@@ -89,19 +99,19 @@
         <selectKey keyProperty="recordId" resultType="long" order="BEFORE">
             SELECT SEQ_CHECK_IN.NEXTVAL FROM DUAL
         </selectKey>
-        INSERT INTO CHECK_IN_RECORD(RECORD_ID, ORDER_ID, RES_ID, ROOM_ID, CHECK_IN, STATUS, UPDATE_BY)
+        INSERT INTO CHECK_IN_RECORD(RECORD_ID, ORDER_ID, RES_ID, ROOM_ID, CHECK_IN, STATUS, CREATE_TIME, UPDATE_TIME, UPDATE_BY)
         VALUES(#{recordId}, #{orderId}, #{resId}, #{roomId},
-               <choose><when test="checkIn != null">#{checkIn}</when><otherwise>SYSDATE</otherwise></choose>,
+               <choose><when test="checkIn != null">#{checkIn}</when><otherwise>F_NOW()</otherwise></choose>,
                <choose><when test="status  != null">#{status}</when><otherwise>1</otherwise></choose>,
-               #{updateBy})
+               F_NOW(), F_NOW(), #{updateBy})
     </insert>
 
     <update id="updateCheckOutWithVersion">
         UPDATE CHECK_IN_RECORD SET
             STATUS = 2,
-            CHECK_OUT = SYSDATE,
+            CHECK_OUT = F_NOW(),
             VERSION = VERSION + 1,
-            UPDATE_TIME = SYSDATE,
+            UPDATE_TIME = F_NOW(),
             UPDATE_BY = #{updateBy}
         WHERE RECORD_ID = #{recordId} AND VERSION = #{version}
     </update>

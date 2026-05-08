@@ -7,13 +7,16 @@ import * as ElementPlusIconsVue from "@element-plus/icons-vue";
 
 import App from "./App.vue";
 import router from "./router";
+import permPlugin from "./directives/perm";
 import "./styles/main.css";
 
 const app = createApp(App);
 app.use(createPinia());
 app.use(router);
 app.use(ElementPlus, { locale: zhCn });
+app.use(permPlugin);
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component);
 }
 app.mount("#app");
+

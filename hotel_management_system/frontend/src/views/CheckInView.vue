@@ -8,16 +8,22 @@
       <el-date-picker v-model="dateRange" type="daterange" start-placeholder="入住开始" end-placeholder="入住结束" value-format="YYYY-MM-DD" @change="onDateChange" style="width:260px" />
       <el-button type="primary" @click="load"><el-icon><Search /></el-icon>查询</el-button>
       <div class="filler"></div>
-      <el-button type="primary" @click="openWalkIn"><el-icon><Plus /></el-icon>散客入住</el-button>
+      <el-button type="primary" @click="openWalkIn" v-perm="'checkin:checkin'"><el-icon><Plus /></el-icon>散客入住</el-button>
     </div>
     <el-card shadow="never" style="border-radius:12px">
       <el-table :data="list" stripe>
         <el-table-column prop="recordId" label="入住号" min-width="80" />
         <el-table-column prop="orderNo" label="订单号" min-width="150" />
+        <el-table-column label="段次" min-width="80">
+          <template #default="{ row }">
+            <span v-if="row.segTotal && row.segTotal > 1">第 {{ row.segNo }} / {{ row.segTotal }} 段</span>
+            <span v-else style="color:#94a3b8">—</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="roomNo" label="房间" min-width="90" />
         <el-table-column prop="customerName" label="客户" min-width="100" />
-        <el-table-column prop="checkIn" label="入住时间" min-width="155" />
-        <el-table-column prop="checkOut" label="退房时间" min-width="155" />
+        <el-table-column prop="checkIn" label="入住时间" min-width="200" />
+        <el-table-column prop="checkOut" label="退房时间" min-width="200" />
         <el-table-column label="状态" min-width="100">
           <template #default="{ row }">
             <el-tag :type="ciTag(row.status)" size="small" effect="dark" round>
@@ -28,8 +34,8 @@
         <el-table-column label="操作" fixed="right" min-width="220">
           <template #default="{ row }">
             <el-button link type="primary" @click="viewGuests(row)">同住人</el-button>
-            <el-button link type="warning" v-if="row.status === 1" @click="changeRoom(row)">换房</el-button>
-            <el-button link type="danger" v-if="row.status === 1" @click="checkOut(row)">退房</el-button>
+            <el-button link type="warning" v-if="row.status === 1" v-perm="'checkin:changeroom'" @click="changeRoom(row)">换房</el-button>
+            <el-button link type="danger"  v-if="row.status === 1" v-perm="'checkin:checkout'" @click="checkOut(row)">退房</el-button>
           </template>
         </el-table-column>
       </el-table>

@@ -14,11 +14,13 @@
         <result property="updateTime" column="UPDATE_TIME"/>
         <result property="updateBy"   column="UPDATE_BY"/>
         <result property="roleName"   column="ROLE_NAME"/>
+        <result property="permissions" column="PERMISSIONS"/>
     </resultMap>
 
     <sql id="cols">
         u.USER_ID, u.USERNAME, u.PASSWORD, u.REAL_NAME, u.ROLE_ID, u.STATUS,
-        u.IS_DELETED, u.CREATE_TIME, u.UPDATE_TIME, u.UPDATE_BY, r.ROLE_NAME
+        u.IS_DELETED, u.CREATE_TIME, u.UPDATE_TIME, u.UPDATE_BY,
+        r.ROLE_NAME, r.PERMISSIONS
     </sql>
 
     <select id="findById" resultMap="BaseMap">
@@ -64,10 +66,10 @@
         <selectKey keyProperty="userId" resultType="long" order="BEFORE">
             SELECT SEQ_SYS_USER.NEXTVAL FROM DUAL
         </selectKey>
-        INSERT INTO SYS_USER(USER_ID, USERNAME, PASSWORD, REAL_NAME, ROLE_ID, STATUS, UPDATE_BY)
+        INSERT INTO SYS_USER(USER_ID, USERNAME, PASSWORD, REAL_NAME, ROLE_ID, STATUS, CREATE_TIME, UPDATE_TIME, UPDATE_BY)
         VALUES(#{userId}, #{username}, #{password}, #{realName}, #{roleId},
                <choose><when test="status != null">#{status}</when><otherwise>1</otherwise></choose>,
-               #{updateBy})
+               F_NOW(), F_NOW(), #{updateBy})
     </insert>
 
     <update id="update" parameterType="com.oracle.test.entity.SysUser">
@@ -75,23 +77,23 @@
             REAL_NAME = #{realName},
             ROLE_ID   = #{roleId},
             STATUS    = #{status},
-            UPDATE_TIME = SYSDATE,
+            UPDATE_TIME = F_NOW(),
             UPDATE_BY = #{updateBy}
         WHERE USER_ID = #{userId}
     </update>
 
     <update id="updateStatus">
-        UPDATE SYS_USER SET STATUS = #{status}, UPDATE_TIME = SYSDATE, UPDATE_BY = #{updateBy}
+        UPDATE SYS_USER SET STATUS = #{status}, UPDATE_TIME = F_NOW(), UPDATE_BY = #{updateBy}
         WHERE USER_ID = #{userId}
     </update>
 
     <update id="updatePassword">
-        UPDATE SYS_USER SET PASSWORD = #{password}, UPDATE_TIME = SYSDATE, UPDATE_BY = #{updateBy}
+        UPDATE SYS_USER SET PASSWORD = #{password}, UPDATE_TIME = F_NOW(), UPDATE_BY = #{updateBy}
         WHERE USER_ID = #{userId}
     </update>
 
     <update id="logicDelete">
-        UPDATE SYS_USER SET IS_DELETED = 1, UPDATE_TIME = SYSDATE, UPDATE_BY = #{updateBy}
+        UPDATE SYS_USER SET IS_DELETED = 1, UPDATE_TIME = F_NOW(), UPDATE_BY = #{updateBy}
         WHERE USER_ID = #{userId}
     </update>
 </mapper>
