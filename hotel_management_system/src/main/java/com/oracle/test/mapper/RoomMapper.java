@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface RoomMapper {
@@ -38,5 +39,14 @@ public interface RoomMapper {
                                 @Param("updateBy") Long updateBy);
 
     int logicDelete(@Param("roomId") Long roomId,
+                    @Param("updateBy") Long updateBy);
+
+    /** 返回 image / imageType / imageName 三列；image 为空表示无图 */
+    Map<String, Object> findImage(@Param("roomId") Long roomId);
+
+    int updateImage(@Param("roomId") Long roomId,
+                    @Param("image") byte[] image,
+                    @Param("imageType") String imageType,
+                    @Param("imageName") String imageName,
                     @Param("updateBy") Long updateBy);
 }

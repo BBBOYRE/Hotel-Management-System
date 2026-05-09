@@ -15,13 +15,15 @@
         <result property="updateBy"   column="UPDATE_BY"/>
         <result property="typeName"   column="TYPE_NAME"/>
         <result property="statusName" column="STATUS_NAME"/>
+        <result property="hasImage"   column="HAS_IMAGE"/>
     </resultMap>
 
     <sql id="cols">
         r.ROOM_ID, r.ROOM_NO, r.TYPE_ID, r.FLOOR_NUM, r.STATUS, r.IS_DELETED, r.VERSION,
         r.CREATE_TIME, r.UPDATE_TIME, r.UPDATE_BY,
         rt.TYPE_NAME,
-        d.ITEM_NAME AS STATUS_NAME
+        d.ITEM_NAME AS STATUS_NAME,
+        CASE WHEN r.IMAGE IS NULL THEN 0 ELSE 1 END AS HAS_IMAGE
     </sql>
 
     <sql id="joins">
@@ -115,6 +117,31 @@
 
     <update id="logicDelete">
         UPDATE ROOM SET IS_DELETED = 1, UPDATE_TIME = F_NOW(), UPDATE_BY = #{updateBy}
+        WHERE ROOM_ID = #{roomId}
+    </update>
+
+    <!-- 图片读取：单独取，不和 BaseMap 混用，避免列表查询拉 BLOB -->
+    <resultMap id="ImageMap" type="java.util.HashMap">
+        <result property="image"     column="image"     jdbcType="BLOB"    javaType="[B"/>
+        <result property="imageType" column="imageType" jdbcType="VARCHAR"/>
+        <result property="imageName" column="imageName" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="findImage" resultMap="ImageMap">
+        SELECT IMAGE      AS "image",
+               IMAGE_TYPE AS "imageType",
+               IMAGE_NAME AS "imageName"
+          FROM ROOM
+         WHERE ROOM_ID = #{roomId} AND IS_DELETED = 0
+    </select>
+
+    <update id="updateImage">
+        UPDATE ROOM SET
+            IMAGE      = #{image,    jdbcType=BLOB},
+            IMAGE_TYPE = #{imageType,jdbcType=VARCHAR},
+            IMAGE_NAME = #{imageName,jdbcType=VARCHAR},
+            UPDATE_TIME = F_NOW(),
+            UPDATE_BY = #{updateBy}
         WHERE ROOM_ID = #{roomId}
     </update>
 </mapper>

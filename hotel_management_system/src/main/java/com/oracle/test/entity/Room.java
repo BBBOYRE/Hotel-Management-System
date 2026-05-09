@@ -7,7 +7,6 @@ import java.util.Date;
 public class Room {
 
     public static final int STATUS_FREE_CLEAN = 1;
-    public static final int STATUS_RESERVED   = 2;
     public static final int STATUS_OCCUPIED   = 3;
     public static final int STATUS_FREE_DIRTY = 4;
     public static final int STATUS_REPAIRING  = 5;
@@ -25,6 +24,7 @@ public class Room {
 
     private String typeName;
     private String statusName;
+    private Boolean hasImage;
 
     public boolean isAvailable() {
         return status != null && status == STATUS_FREE_CLEAN;
@@ -40,7 +40,6 @@ public class Room {
     public void markFreeDirty()  { this.status = STATUS_FREE_DIRTY; }
     public void markFreeClean()  { this.status = STATUS_FREE_CLEAN; }
     public void markRepairing()  { this.status = STATUS_REPAIRING;  }
-    public void markReserved()   { this.status = STATUS_RESERVED;   }
 
     public Long getRoomId() { return roomId; }
     public void setRoomId(Long roomId) { this.roomId = roomId; }
@@ -66,4 +65,6 @@ public class Room {
     public void setTypeName(String typeName) { this.typeName = typeName; }
     public String getStatusName() { return statusName; }
     public void setStatusName(String statusName) { this.statusName = statusName; }
+    public Boolean getHasImage() { return hasImage; }
+    public void setHasImage(Boolean hasImage) { this.hasImage = hasImage; }
 }

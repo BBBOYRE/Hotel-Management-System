@@ -59,9 +59,13 @@
         </el-form-item>
         <el-form-item label="关联预订" v-if="walkForm.resId">
           <el-tag>预订号 {{ walkForm.resId }}</el-tag>
+          <el-tag v-if="walkForm.reservedTypeName" type="success" effect="plain" style="margin-left:8px">
+            预订房型：{{ walkForm.reservedTypeName }}
+          </el-tag>
         </el-form-item>
         <el-form-item label="分配房间">
-          <el-select v-model="walkForm.roomId" filterable style="width:100%" placeholder="选择空闲房间">
+          <el-select v-model="walkForm.roomId" filterable style="width:100%"
+                     :placeholder="walkForm.reservedTypeName ? `仅显示【${walkForm.reservedTypeName}】空闲房间` : '选择空闲房间'">
             <el-option v-for="r in availableRooms" :key="r.roomId" :label="`${r.roomNo} (${r.typeName || ''} ${r.floorNum}F)`" :value="r.roomId" />
           </el-select>
         </el-form-item>
@@ -119,7 +123,7 @@ const dateRange = ref(null);
 const query = reactive({ keyword: "", status: null, startDate: null, endDate: null, pageNum: 1, pageSize: 10 });
 
 const walkVisible = ref(false);
-const walkForm = ref({ idCard: "", custName: "", customerId: null, resId: null, roomId: null, guests: [] });
+const walkForm = ref({ idCard: "", custName: "", customerId: null, resId: null, reservedTypeId: null, reservedTypeName: "", roomId: null, guests: [] });
 const availableRooms = ref([]);
 
 const guestVisible = ref(false);
@@ -133,7 +137,7 @@ onMounted(async () => {
   // if redirected from reservation
   if (route.query.resId) {
     walkForm.value.resId = Number(route.query.resId);
-    await loadRooms();
+    await loadReservationAndRooms(walkForm.value.resId);
     walkVisible.value = true;
   }
   load();
@@ -155,13 +159,28 @@ function ciTag(s) {
   return { 1: "success", 2: "info" }[s] || "info";
 }
 
-async function loadRooms() {
-  const r = await http.get("/rooms/available");
+async function loadRooms(typeId = null) {
+  const params = typeId ? { typeId } : {};
+  const r = await http.get("/rooms/available", { params });
   availableRooms.value = r.data || [];
 }
 
+async function loadReservationAndRooms(resId) {
+  try {
+    const r = await http.get(`/reservations/${resId}`);
+    const res = r.data;
+    if (res) {
+      walkForm.value.reservedTypeId   = res.typeId;
+      walkForm.value.reservedTypeName = res.typeName;
+      await loadRooms(res.typeId);
+      return;
+    }
+  } catch (e) { /* fall through */ }
+  await loadRooms();
+}
+
 async function openWalkIn() {
-  walkForm.value = { idCard: "", custName: "", customerId: null, resId: null, roomId: null, guests: [] };
+  walkForm.value = { idCard: "", custName: "", customerId: null, resId: null, reservedTypeId: null, reservedTypeName: "", roomId: null, guests: [] };
   await loadRooms();
   walkVisible.value = true;
 }

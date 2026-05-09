@@ -41,7 +41,7 @@ public class HousekeepingService {
                 && room.getStatus() != Room.STATUS_FREE_CLEAN
                 && room.getStatus() != Room.STATUS_FREE_DIRTY
                 && room.getStatus() != Room.STATUS_REPAIRING) {
-            throw new BusinessException("已入住或已预订的房间不能直接派维修，请先处理入住");
+            throw new BusinessException("已入住的房间不能直接派维修，请先处理退房");
         }
         req.setUpdateBy(updateBy);
         if (req.getStatus() == null) req.setStatus(RoomService.STATUS_PENDING);
@@ -61,7 +61,8 @@ public class HousekeepingService {
     /**
      * 完成工单：
      * - 清扫工单（TYPE_CLEAN）：仅在房间为「空闲脏房」时允许，完成后转为「空闲净房」
-     * - 维修工单（TYPE_REPAIR）：仅在房间为「维修中」时允许，完成后转为「空闲净房」
+     * - 维修工单（TYPE_REPAIR）：仅在房间为「维修中」时允许，完成后转为「空闲脏房」
+     *   维修过程会弄脏房间，必须再走清扫工单才能投入使用，避免脏房被维修绕过清扫直接变净。
      * 任意类型与房态不匹配时拒绝，避免清扫工单被用来"修好"维修中的房间。
      */
     @Transactional
@@ -74,19 +75,22 @@ public class HousekeepingService {
         Room room = roomMapper.findById(req.getRoomId());
         if (room == null) throw new BusinessException("房间不存在");
 
+        int nextStatus;
         if (req.getServiceType() != null && req.getServiceType() == RoomService.TYPE_CLEAN) {
             if (room.getStatus() == null || room.getStatus() != Room.STATUS_FREE_DIRTY) {
                 throw new BusinessException("当前房态不是「空闲脏房」，清扫工单无法完成");
             }
+            nextStatus = Room.STATUS_FREE_CLEAN;
         } else if (req.getServiceType() != null && req.getServiceType() == RoomService.TYPE_REPAIR) {
             if (room.getStatus() == null || room.getStatus() != Room.STATUS_REPAIRING) {
                 throw new BusinessException("当前房态不是「维修中」，维修工单无法完成");
             }
+            nextStatus = Room.STATUS_FREE_DIRTY;
         } else {
             throw new BusinessException("工单类型未知，无法完成");
         }
 
         serviceMapper.updateStatus(serviceId, RoomService.STATUS_FINISHED, operatorId, updateBy);
-        roomService.updateStatus(req.getRoomId(), Room.STATUS_FREE_CLEAN, updateBy);
+        roomService.updateStatus(req.getRoomId(), nextStatus, updateBy);
     }
 }
